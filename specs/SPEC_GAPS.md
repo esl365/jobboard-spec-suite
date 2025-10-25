@@ -2,6 +2,44 @@
 
   > Single source of truth. Append newest at the top. Do not delete resolved items—mark them with a link to the fixing PR/commit.
 
+  ## [2025-10-25] PR #1 Conflict Resolution Review
+
+  ### GAP-001: Signature encoding drift (hex vs. base64)
+
+  **Context:** Discovered during PR #1 conflict review. `src/payments/adapters/mock.ts:19` uses `digest("hex")` for HMAC-SHA256 signature encoding, but `specs/Spec-Trace.yml` test vectors (TV01-TV03) specify base64 encoding. Line 25 also uses hex for signature comparison.
+
+  **Impact:** Signature verification will fail when tested against canonical test vectors TV01-TV03 from Spec-Trace.yml. Breaks contract conformance (Phase 6 of review protocol). Production webhook integration tests will fail.
+
+  **Minimal Proposal:** Change `digest("hex")` → `digest("base64")` in `src/payments/adapters/mock.ts` lines 19, 25. Update corresponding Buffer.from calls from "hex" to "base64". Verify test suite uses base64-encoded signatures matching Spec-Trace.yml.
+
+  **Status:** OPEN (blocking merge until resolved)
+
+  ---
+
+  ### GAP-002: rawBody fallback may re-stringify (timing attack vulnerability)
+
+  **Context:** Discovered during PR #1 conflict review. `src/routes/webhooks.payments.ts:43` has fallback logic: `const rawBody = typeof request.rawBody === "string" ? request.rawBody : stableStringify(request.body ?? {});`
+
+  **Impact:** If middleware doesn't provide `request.rawBody`, the webhook handler re-stringifies the parsed JSON body. Re-stringified body may not match the original wire format byte-for-byte (whitespace, key ordering). This breaks HMAC signature verification and creates a timing attack vulnerability where attacker can craft JSON with different formatting that passes re-stringification but fails original signature check.
+
+  **Minimal Proposal:** Remove fallback logic. Require `request.rawBody` from middleware; throw error if missing. Add middleware that captures raw request buffer BEFORE body-parser runs (e.g., `app.use((req, res, next) => { let data = ''; req.on('data', chunk => data += chunk); req.on('end', () => { req.rawBody = data; next(); }); })`). Add test case verifying signature verification fails if body is re-parsed.
+
+  **Status:** OPEN (requires verification that middleware is present; non-blocking if proven present in integration tests)
+
+  ---
+
+  ### GAP-003: Redocly CLI not vendored (CI/DoD blocker)
+
+  **Context:** Discovered during PR #1 conflict review. `package.json` references `"@redocly/cli": "file:./tools/redocly/redocly-cli-2.8.0.tgz"` but the tarball file may not exist in repository. `scripts/openapi-lint.mjs` falls back to offline YAML-based linting.
+
+  **Impact:** Cannot run full OpenAPI lint with Redocly rules in CI. Offline fallback is incomplete (missing Redocly-specific validations: security scheme consistency, response schema completeness, parameter duplication detection beyond basic checks). Definition of Done (DoD) requires passing full preflight including Redocly lint.
+
+  **Minimal Proposal:** Vendor Redocly CLI tarball under `tools/redocly/` (download and commit `redocly-cli-2.8.0.tgz`) OR update `package.json` to use npm registry version `"@redocly/cli": "^1.25.0"` if offline vendoring not required. Update `scripts/openapi-lint.mjs` to prefer vendored Redocly when present.
+
+  **Status:** OPEN (non-blocking for v1 merge; requires follow-up PR to meet DoD for production deployment)
+
+  ---
+
   ## [2025-10-25] Payments Vertical Slice Review
 
   ### C) OpenAPI contract inconsistencies
