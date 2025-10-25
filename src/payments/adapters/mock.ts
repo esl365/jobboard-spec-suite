@@ -18,15 +18,20 @@ export class MockPaymentAdapter {
   }
 
   signPayload(payload, secret = this.webhookSecret) {
-    const raw = typeof payload === "string" ? payload : stableStringify(payload);
-    return crypto.createHmac("sha256", secret).update(raw).digest("hex");
+    const raw =
+      typeof payload === "string"
+        ? payload
+        : typeof Buffer !== "undefined" && Buffer.isBuffer && Buffer.isBuffer(payload)
+        ? payload.toString("utf8")
+        : stableStringify(payload);
+    return crypto.createHmac("sha256", secret).update(raw).digest("base64");
   }
 
   verifySignature({ rawBody, signature, secret = this.webhookSecret }) {
     if (!signature) return false;
     const expected = this.signPayload(rawBody, secret);
-    const signatureBuffer = Buffer.from(signature, "hex");
-    const expectedBuffer = Buffer.from(expected, "hex");
+    const signatureBuffer = Buffer.from(signature, "base64");
+    const expectedBuffer = Buffer.from(expected, "base64");
     if (signatureBuffer.length !== expectedBuffer.length) return false;
     try {
       return crypto.timingSafeEqual(signatureBuffer, expectedBuffer);

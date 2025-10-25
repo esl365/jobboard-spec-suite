@@ -2,10 +2,23 @@
 
 > Single source of truth. Append newest at the top. Do not delete resolved items—mark them with a link to the fixing PR/commit.
 
-## [2025-10-28] Redocly CLI not vendored for offline linting
+## [GAP-001][2025-10-28] Mock adapter signature digest format
+- **Context**: Conflict resolution revealed the mock adapter was emitting hex-encoded HMAC signatures while Spec Trace requires base64 for provider parity.
+- **Impact**: Webhook verification using the shared adapter header would fail against canonical test vectors and real integrations.
+- **Proposal**: Switch to base64-encoded `sha256` digests for both signing and verification and share the header constant across adapter + handler.
+- **Status**: RESOLVED in codex/payments-core-v1 (commit TBD) by updating `src/payments/adapters/mock.ts` to emit/verify base64 signatures and aligning tests.
+
+## [GAP-002][2025-10-28] Raw webhook payload not enforced for signature checks
+- **Context**: Previous webhook handler fell back to JSON stringification when `request.rawBody` was unavailable, violating the spec requirement to hash the exact raw payload.
+- **Impact**: Attackers could replay tampered payloads that stringify identically, breaking signature guarantees and causing drift from acceptance vectors.
+- **Proposal**: Require the raw body to be captured upstream; reject webhook deliveries if the raw payload is missing and document the server wiring assumption.
+- **Status**: RESOLVED in codex/payments-core-v1 (commit TBD) via `src/routes/webhooks.payments.ts` enforcing raw-body presence and removing stringify fallbacks, covered by tests.
+
+## [GAP-003][2025-10-28] Redocly CLI not vendored for offline linting
 - **Context**: Preflight relies on `scripts/openapi-lint.mjs` because the Redocly CLI package cannot be downloaded in the offline workspace.
 - **Impact**: Offline fallback covers basic checks only; CI parity is at risk until the official CLI is bundled with the repo.
 - **Proposal**: Vendor `@redocly/cli` under `tools/redocly-cli/` with a wrapper script so preflight can execute the official linter without network access.
+- **Status**: OPEN — plan remains to vendor the CLI in a follow-up tooling PR.
 
 ## [2025-10-28] Webhook signature tolerance assumed
 - **Context**: Acceptance docs for the payments webhook do not specify the maximum allowed timestamp skew for HMAC verification.

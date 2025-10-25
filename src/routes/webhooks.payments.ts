@@ -4,7 +4,7 @@ import {
   PAYMENT_SIGNATURE_TIMESTAMP_HEADER,
   validateWebhookEvent,
 } from "../payments/types.ts";
-import { fingerprintPayload, stableStringify } from "../utils/stableStringify.ts";
+import { fingerprintPayload } from "../utils/stableStringify.ts";
 import { badRequest } from "./httpError.ts";
 
 const RETENTION_DAYS = 180;
@@ -17,13 +17,12 @@ function readHeader(headers = {}, name) {
   return undefined;
 }
 
-function resolveRawBody(request) {
+function requireRawBody(request) {
   if (typeof request.rawBody === "string") return request.rawBody;
   if (typeof Buffer !== "undefined" && typeof Buffer.isBuffer === "function" && Buffer.isBuffer(request.rawBody)) {
     return request.rawBody.toString("utf8");
   }
-  if (typeof request.body === "string") return request.body;
-  return stableStringify(request.body ?? {});
+  throw badRequest("RAW_BODY_REQUIRED", "Raw body required for signature verification");
 }
 
 function resolveOrderStatus(type) {
@@ -53,8 +52,8 @@ export function createPaymentsWebhookHandler({ paymentsRepo, registry, clock = (
     const adapter = registry.get(provider);
     if (!adapter) throw badRequest("UNKNOWN_PROVIDER", `Unsupported provider ${provider}`);
 
-    const rawBody = resolveRawBody(request);
-    const signature = readHeader(request.headers, PAYMENT_SIGNATURE_HEADER) || request.body?.signature;
+    const rawBody = requireRawBody(request);
+    const signature = readHeader(request.headers, PAYMENT_SIGNATURE_HEADER);
     const timestampHeader = readHeader(request.headers, PAYMENT_SIGNATURE_TIMESTAMP_HEADER);
     const timestamp = parseTimestamp(timestampHeader);
     if (!timestamp) {
