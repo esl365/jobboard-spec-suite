@@ -7,3 +7,6 @@ coverage/
 *.log
 .vscode/
 .idea/
+
+_check/
+*.zip
