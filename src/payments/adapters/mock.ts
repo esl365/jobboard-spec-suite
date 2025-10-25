@@ -1,12 +1,16 @@
 import crypto from "node:crypto";
 import { stableStringify } from "../../utils/stableStringify.ts";
+import { PAYMENT_SIGNATURE_HEADER } from "../types.ts";
 
 const DEFAULT_SECRET = "mock_webhook_secret";
+
+export const MOCK_SIGNATURE_HEADER = PAYMENT_SIGNATURE_HEADER;
 
 export class MockPaymentAdapter {
   constructor(options = {}) {
     this.provider = "mock";
     this.webhookSecret = options.webhookSecret || DEFAULT_SECRET;
+    this.signatureHeader = MOCK_SIGNATURE_HEADER;
   }
 
   providerName() {

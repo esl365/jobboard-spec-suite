@@ -34,7 +34,8 @@ CREATE TABLE IF NOT EXISTS webhook_events (
   payload JSONB NOT NULL,
   signature TEXT,
   payload_fingerprint TEXT,
-  retention_until TIMESTAMPTZ NOT NULL DEFAULT (now() + interval '180 days')
+  retention_until TIMESTAMPTZ NOT NULL DEFAULT (now() + interval '180 days'),
+  UNIQUE (provider, event_uid)
 );
 
 CREATE TABLE IF NOT EXISTS wallet_ledger (

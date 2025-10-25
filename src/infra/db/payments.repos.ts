@@ -92,10 +92,10 @@ class PgPaymentsTransaction extends PaymentsRepositoryTransaction {
     ]);
   }
 
-  async findWebhookEvent(eventUid) {
-    const sql = `SELECT event_id AS "eventId", event_uid AS "eventUid", provider, payload_fingerprint AS "payloadFingerprint"
-      FROM webhook_events WHERE event_uid = $1`;
-    const res = await this.client.query(sql, [eventUid]);
+  async findWebhookEvent(provider, eventUid) {
+    const sql = `SELECT event_id AS "eventId", event_uid AS "eventUid", provider, payload_fingerprint AS "payloadFingerprint"`
+      FROM webhook_events WHERE provider = $1 AND event_uid = $2`;
+    const res = await this.client.query(sql, [provider, eventUid]);
     return res.rows[0] || null;
   }
 

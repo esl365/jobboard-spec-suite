@@ -1,1 +1,2 @@
 - Ensure webhook verification includes a timestamp tolerance; codify assumptions in SPEC_GAPS when upstream docs are silent to avoid silently widening replay windows.
+- Mirror signature header names between adapters and handlers through shared constants to prevent drift when providers add new transports.

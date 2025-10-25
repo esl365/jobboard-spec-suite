@@ -27,7 +27,7 @@ export class PaymentsRepositoryTransaction {
     throw new Error("Not implemented");
   }
 
-  async findWebhookEvent(_eventUid) {
+  async findWebhookEvent(_provider, _eventUid) {
     throw new Error("Not implemented");
   }
 

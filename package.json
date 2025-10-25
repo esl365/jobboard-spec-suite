@@ -3,8 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "preflight": "node scripts/openapi-merge-payments.mjs && node scripts/openapi-lint.mjs && node scripts/spec-drift-check.mjs",
-    "test": "node --loader ./scripts/ts-esm-loader.mjs --test tests/payments.prepare.test.ts && node --loader ./scripts/ts-esm-loader.mjs --test tests/payments.webhooks.test.ts"
+    "test": "node --loader ./scripts/ts-esm-loader.mjs --test tests/index.test.ts"
   }
 }

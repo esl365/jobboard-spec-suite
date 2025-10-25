@@ -2,9 +2,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createInMemoryRepository } from "../src/infra/memory/payments.repos.ts";
 import { createDefaultRegistry } from "../src/payments/registry.ts";
+import { PAYMENT_SIGNATURE_HEADER, PAYMENT_SIGNATURE_TIMESTAMP_HEADER } from "../src/payments/types.ts";
 import { createPaymentsPrepareHandler } from "../src/routes/payments.prepare.ts";
 import { createPaymentsWebhookHandler } from "../src/routes/webhooks.payments.ts";
 import { HttpError } from "../src/routes/httpError.ts";
+import { stableStringify } from "../src/utils/stableStringify.ts";
 
 function setup() {
   const paymentsRepo = createInMemoryRepository({
@@ -21,7 +23,7 @@ function setup() {
 const companyActor = { role: "COMPANY" };
 
 function sign(adapter, body, timestamp) {
-  const raw = typeof body === "string" ? body : JSON.stringify(body);
+  const raw = typeof body === "string" ? body : stableStringify(body);
   const signature = adapter.signPayload(raw);
   return { raw, signature, timestamp: String(Math.floor(timestamp.getTime() / 1000)) };
 }
@@ -45,10 +47,11 @@ test("settles payment completion exactly once", async () => {
     },
   };
   const { raw, signature, timestamp } = sign(adapter, eventBody, new Date("2025-10-26T00:05:00Z"));
+  const signatureHeader = adapter.signatureHeader || PAYMENT_SIGNATURE_HEADER;
 
   const first = await webhook({
     params: { provider: "mock" },
-    headers: { "x-signature": signature, "x-signature-timestamp": timestamp },
+    headers: { [signatureHeader]: signature, [PAYMENT_SIGNATURE_TIMESTAMP_HEADER]: timestamp },
     rawBody: raw,
     body: eventBody,
   });
@@ -57,7 +60,7 @@ test("settles payment completion exactly once", async () => {
 
   const replay = await webhook({
     params: { provider: "mock" },
-    headers: { "x-signature": signature, "x-signature-timestamp": timestamp },
+    headers: { [signatureHeader]: signature, [PAYMENT_SIGNATURE_TIMESTAMP_HEADER]: timestamp },
     rawBody: raw,
     body: eventBody,
   });
@@ -84,10 +87,11 @@ test("rejects tampered replay payload", async () => {
     data: { providerPaymentId: prepareResponse.body.providerPaymentId, orderId: prepareResponse.body.orderId },
   };
   const original = sign(adapter, originalEvent, new Date("2025-10-26T00:05:00Z"));
+  const signatureHeader = adapter.signatureHeader || PAYMENT_SIGNATURE_HEADER;
 
   await webhook({
     params: { provider: "mock" },
-    headers: { "x-signature": original.signature, "x-signature-timestamp": original.timestamp },
+    headers: { [signatureHeader]: original.signature, [PAYMENT_SIGNATURE_TIMESTAMP_HEADER]: original.timestamp },
     rawBody: original.raw,
     body: originalEvent,
   });
@@ -99,7 +103,7 @@ test("rejects tampered replay payload", async () => {
     () =>
       webhook({
         params: { provider: "mock" },
-        headers: { "x-signature": tampered.signature, "x-signature-timestamp": tampered.timestamp },
+        headers: { [signatureHeader]: tampered.signature, [PAYMENT_SIGNATURE_TIMESTAMP_HEADER]: tampered.timestamp },
         rawBody: tampered.raw,
         body: tamperedEvent,
       }),
@@ -113,7 +117,10 @@ test("rejects invalid signature", async () => {
     () =>
       webhook({
         params: { provider: "mock" },
-        headers: { "x-signature": "deadbeef", "x-signature-timestamp": String(Math.floor(Date.now() / 1000)) },
+        headers: {
+          [PAYMENT_SIGNATURE_HEADER]: "deadbeef",
+          [PAYMENT_SIGNATURE_TIMESTAMP_HEADER]: String(Math.floor(Date.now() / 1000)),
+        },
         rawBody: "{}",
         body: { eventUid: "evt-3", provider: "mock", type: "payment.completed", occurredAt: "2025-10-26T02:00:00Z", data: {} },
       }),
@@ -132,12 +139,13 @@ test("rejects stale webhook timestamps", async () => {
   };
   const staleTimestamp = new Date("2025-10-25T23:55:00Z");
   const { raw, signature, timestamp } = sign(adapter, eventBody, staleTimestamp);
+  const signatureHeader = adapter.signatureHeader || PAYMENT_SIGNATURE_HEADER;
 
   await assert.rejects(
     () =>
       webhook({
         params: { provider: "mock" },
-        headers: { "x-signature": signature, "x-signature-timestamp": timestamp },
+        headers: { [signatureHeader]: signature, [PAYMENT_SIGNATURE_TIMESTAMP_HEADER]: timestamp },
         rawBody: raw,
         body: eventBody,
       }),

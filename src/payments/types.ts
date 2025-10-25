@@ -5,6 +5,9 @@ export const OrderStatus = {
   REFUNDED: "REFUNDED",
 };
 
+export const PAYMENT_SIGNATURE_HEADER = "x-signature";
+export const PAYMENT_SIGNATURE_TIMESTAMP_HEADER = "x-signature-timestamp";
+
 export function assertOrderStatus(value) {
   if (!Object.values(OrderStatus).includes(value)) {
     throw new Error(`Unknown order status: ${value}`);

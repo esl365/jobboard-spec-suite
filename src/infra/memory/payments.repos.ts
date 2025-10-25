@@ -10,6 +10,10 @@ function clone(value) {
   return value === undefined ? undefined : structuredClone(value);
 }
 
+function makeEventKey(provider, eventUid) {
+  return `${provider}:${eventUid}`;
+}
+
 class InMemoryTransaction extends PaymentsRepositoryTransaction {
   constructor(state) {
     super();
@@ -75,17 +79,20 @@ class InMemoryTransaction extends PaymentsRepositoryTransaction {
     this.state.walletLedger.push(clone(entry));
   }
 
-  findWebhookEvent(eventUid) {
-    return this.state.webhookEvents.find(event => event.eventUid === eventUid) || null;
+  findWebhookEvent(provider, eventUid) {
+    const key = makeEventKey(provider, eventUid);
+    return this.state.webhookEvents.find(event => (event.eventKey || makeEventKey(event.provider, event.eventUid)) === key) || null;
   }
 
   insertWebhookEvent(event) {
-    const existing = this.state.webhookEvents.find(e => e.eventUid === event.eventUid);
+    const key = makeEventKey(event.provider, event.eventUid);
+    const existing = this.state.webhookEvents.find(e => (e.eventKey || makeEventKey(e.provider, e.eventUid)) === key);
     if (existing) {
       throw new Error("Duplicate webhook event");
     }
-    this.state.webhookEvents.push(clone(event));
-    return clone(event);
+    const record = { ...clone(event), eventKey: key };
+    this.state.webhookEvents.push(record);
+    return clone(record);
   }
 
   getProductPackage(packageId) {

@@ -1,4 +1,9 @@
-import { OrderStatus, validateWebhookEvent } from "../payments/types.ts";
+import {
+  OrderStatus,
+  PAYMENT_SIGNATURE_HEADER,
+  PAYMENT_SIGNATURE_TIMESTAMP_HEADER,
+  validateWebhookEvent,
+} from "../payments/types.ts";
 import { fingerprintPayload, stableStringify } from "../utils/stableStringify.ts";
 import { badRequest } from "./httpError.ts";
 
@@ -10,6 +15,15 @@ function readHeader(headers = {}, name) {
     if (key.toLowerCase() === name.toLowerCase()) return value;
   }
   return undefined;
+}
+
+function resolveRawBody(request) {
+  if (typeof request.rawBody === "string") return request.rawBody;
+  if (typeof Buffer !== "undefined" && typeof Buffer.isBuffer === "function" && Buffer.isBuffer(request.rawBody)) {
+    return request.rawBody.toString("utf8");
+  }
+  if (typeof request.body === "string") return request.body;
+  return stableStringify(request.body ?? {});
 }
 
 function resolveOrderStatus(type) {
@@ -39,9 +53,9 @@ export function createPaymentsWebhookHandler({ paymentsRepo, registry, clock = (
     const adapter = registry.get(provider);
     if (!adapter) throw badRequest("UNKNOWN_PROVIDER", `Unsupported provider ${provider}`);
 
-    const rawBody = typeof request.rawBody === "string" ? request.rawBody : stableStringify(request.body ?? {});
-    const signature = readHeader(request.headers, "x-signature") || request.body?.signature;
-    const timestampHeader = readHeader(request.headers, "x-signature-timestamp");
+    const rawBody = resolveRawBody(request);
+    const signature = readHeader(request.headers, PAYMENT_SIGNATURE_HEADER) || request.body?.signature;
+    const timestampHeader = readHeader(request.headers, PAYMENT_SIGNATURE_TIMESTAMP_HEADER);
     const timestamp = parseTimestamp(timestampHeader);
     if (!timestamp) {
       throw badRequest("MISSING_TIMESTAMP", "Signature timestamp required");
@@ -66,7 +80,7 @@ export function createPaymentsWebhookHandler({ paymentsRepo, registry, clock = (
     const retentionUntil = new Date(now.getTime() + RETENTION_DAYS * 24 * 60 * 60 * 1000).toISOString();
 
     return paymentsRepo.runInTransaction(async tx => {
-      const existingEvent = await tx.findWebhookEvent(event.eventUid);
+      const existingEvent = await tx.findWebhookEvent(provider, event.eventUid);
       if (existingEvent) {
         if (existingEvent.payloadFingerprint && existingEvent.payloadFingerprint !== fingerprint) {
           throw badRequest("EVENT_REPLAY_TAMPERED", "Replay payload does not match original");

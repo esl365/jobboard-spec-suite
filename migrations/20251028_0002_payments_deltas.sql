@@ -16,3 +16,6 @@ ALTER TABLE webhook_events
   ADD COLUMN IF NOT EXISTS retention_until TIMESTAMPTZ NOT NULL DEFAULT (now() + interval '180 days');
 
 COMMENT ON COLUMN webhook_events.retention_until IS 'Housekeeping: purge webhook events after 180 days';
+
+CREATE UNIQUE INDEX IF NOT EXISTS webhook_events_provider_event_uid_idx
+  ON webhook_events(provider, event_uid);

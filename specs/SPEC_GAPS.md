@@ -2,6 +2,11 @@
 
 > Single source of truth. Append newest at the top. Do not delete resolved items—mark them with a link to the fixing PR/commit.
 
+## [2025-10-28] Redocly CLI not vendored for offline linting
+- **Context**: Preflight relies on `scripts/openapi-lint.mjs` because the Redocly CLI package cannot be downloaded in the offline workspace.
+- **Impact**: Offline fallback covers basic checks only; CI parity is at risk until the official CLI is bundled with the repo.
+- **Proposal**: Vendor `@redocly/cli` under `tools/redocly-cli/` with a wrapper script so preflight can execute the official linter without network access.
+
 ## [2025-10-28] Webhook signature tolerance assumed
 - **Context**: Acceptance docs for the payments webhook do not specify the maximum allowed timestamp skew for HMAC verification.
 - **Impact**: Without a bound, webhook deliveries could replay old signed payloads; tests require a deterministic tolerance to ensure the handler rejects stale events.
