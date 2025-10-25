@@ -1,1 +1,23 @@
-# placeholder: specs\Spec-Trace.yml
+runnables:
+  - id: LOCAL-PAY-PP-01
+    description: Prepare stores business fingerprint and reuses existing order when payload matches
+    tests:
+      - tests/payments.prepare.test.ts#creates a pending order using package pricing
+      - tests/payments.prepare.test.ts#reuses the same order when the payload matches
+  - id: LOCAL-PAY-PP-02
+    description: Prepare rejects idempotency key reuse with conflicting business data
+    tests:
+      - tests/payments.prepare.test.ts#rejects mismatched payload for same idempotency key
+      - tests/payments.prepare.test.ts#rejects amount mismatches against package pricing
+      - tests/payments.prepare.test.ts#rejects inactive packages
+      - tests/payments.prepare.test.ts#requires company actors
+  - id: LOCAL-PAY-WH-01
+    description: Webhook settles payment exactly once and records ledger credit
+    tests:
+      - tests/payments.webhooks.test.ts#settles payment completion exactly once
+  - id: LOCAL-PAY-WH-02
+    description: Webhook rejects tampered replays, invalid signatures, and stale timestamps
+    tests:
+      - tests/payments.webhooks.test.ts#rejects tampered replay payload
+      - tests/payments.webhooks.test.ts#rejects invalid signature
+      - tests/payments.webhooks.test.ts#rejects stale webhook timestamps

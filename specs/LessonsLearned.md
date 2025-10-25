@@ -1,1 +1,1 @@
-<!-- placeholder: specs\LessonsLearned.md -->
+- Ensure webhook verification includes a timestamp tolerance; codify assumptions in SPEC_GAPS when upstream docs are silent to avoid silently widening replay windows.

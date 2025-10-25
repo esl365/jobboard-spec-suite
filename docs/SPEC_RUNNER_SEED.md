@@ -8,8 +8,9 @@ Task pattern: Plan → Implement → Verify. Report in the 3-section format (Cha
 
 
 **Pre-flight (message 2)**  
-1) OpenAPI lint → 2) DB dry-run → 3) Forbidden scan → 4) Tests  
+1) OpenAPI lint → 2) DB dry-run → 3) Forbidden scan → 4) Tests
 On failure, update `specs/SPEC_GAPS.md` (context/impact/proposal) and STOP.
+  - **Offline fallback:** When the Redocly CLI cannot be installed (e.g., npm registry 403), run `node scripts/openapi-lint.mjs openapi/api-spec.yaml` to enforce structural lint until the vendored CLI is available.
 
 **Merge & Drift (message 3)**
 - `node scripts/openapi-merge-payments.mjs`

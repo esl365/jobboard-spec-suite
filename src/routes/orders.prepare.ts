@@ -1,1 +1,1 @@
-// placeholder: src\routes\orders.prepare.ts
+export { createPaymentsPrepareHandler } from './payments.prepare.ts';
