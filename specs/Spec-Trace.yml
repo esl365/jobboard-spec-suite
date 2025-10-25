@@ -2,8 +2,8 @@
 # Comprehensive mapping: Tests ↔ OpenAPI ↔ DDL ↔ Code ↔ Functional Specs
 # Purpose: Ensure complete traceability from requirements → implementation → verification
 
-version: "1.0"
-updated: "2025-10-25"
+version: "1.1"
+updated: "2025-10-26"
 
 # =============================================================================
 # PAYMENTS VERTICAL SLICE: Prepare & Webhook
@@ -42,8 +42,7 @@ payments_prepare_endpoint:
       200: "#/components/schemas/Order"
       409: "#/components/schemas/Error"
     issues:
-      - "SPEC_GAP C: Duplicate in main api-spec.yaml (lines 376-432)"
-      - "SPEC_GAP C: Idempotency-Key defined 3 times in main spec"
+      - "RESOLVED: OpenAPI duplicates handled by openapi-merge-payments.mjs (2025-10-26)"
 
   ddl:
     tables:
@@ -62,7 +61,7 @@ payments_prepare_endpoint:
         constraints:
           - UNIQUE (provider, provider_payment_id)
         issues:
-          - "SPEC_GAP D: Missing provider_meta JSONB column"
+          - "PROPOSED: provider_meta JSONB column (see DDL_Deltas_Proposals.md Delta 1)"
 
       - name: idempotency_keys
         file: migrations/20251025_0001_payments.sql
@@ -76,7 +75,7 @@ payments_prepare_endpoint:
         constraints:
           - PRIMARY KEY (idem_key, user_id, method, path)
         issues:
-          - "SPEC_GAP D: Missing expires_at for TTL policy"
+          - "PROPOSED: expires_at TIMESTAMPTZ (see DDL_Deltas_Proposals.md Delta 2)"
 
   implementation:
     handlers:
@@ -103,7 +102,33 @@ payments_prepare_endpoint:
   tests:
     acceptance:
       file: tests/acceptance/payments-prepare.test.md
-      test_cases:
+
+    runnable_tests:
+      unit:
+        - file: tests/payments/unit/prepare-handler.test.js
+          framework: jest
+          test_ids: [A1, A2, B1, B2, B3, B4, B5, B6, B7, B8]
+          description: "Unit tests for prepareOrderHandler business logic"
+
+        - file: tests/payments/unit/idempotency-service.test.js
+          framework: jest
+          test_ids: [A2, B3, D1]
+          description: "Unit tests for idempotency key lookup and collision detection"
+
+      integration:
+        - file: tests/payments/integration/prepare-endpoint.test.js
+          framework: jest
+          test_ids: [A1, A2, C1, C2, C3, D1]
+          description: "Integration tests for POST /payments/prepare with DB + auth"
+          setup: "Requires test DB, auth middleware mock"
+
+      e2e:
+        - file: tests/payments/e2e/prepare-flow.test.js
+          framework: jest
+          test_ids: [A1, A2, D1, D2, D3]
+          description: "End-to-end tests with real HTTP requests"
+
+    test_cases:
         happy_path:
           - id: A1
             name: "First-time order creation"
@@ -274,7 +299,7 @@ payments_webhook_endpoint:
         constraints:
           - UNIQUE (event_uid)
         issues:
-          - "SPEC_GAP D: Missing retention_until for TTL policy"
+          - "PROPOSED: retention_until TIMESTAMPTZ (see DDL_Deltas_Proposals.md Delta 3)"
 
   implementation:
     handlers:
@@ -318,7 +343,43 @@ payments_webhook_endpoint:
   tests:
     acceptance:
       file: tests/acceptance/payments-webhook.test.md
-      test_cases:
+
+    runnable_tests:
+      unit:
+        - file: tests/payments/unit/webhook-handler.test.js
+          framework: jest
+          test_ids: [A1, A2, A3, A4, B1, B2, B3, B4, B5, B6]
+          description: "Unit tests for webhookPaymentsHandler business logic"
+
+        - file: tests/payments/unit/signature-verification.test.js
+          framework: jest
+          test_ids: [B1, B2, C3]
+          description: "Unit tests for signature verification adapters (mock, iamport)"
+
+        - file: tests/payments/unit/state-machine.test.js
+          framework: jest
+          test_ids: [A1, A3, A4, B5]
+          description: "Unit tests for order state machine transitions"
+
+        - file: tests/payments/unit/transaction-boundary.test.js
+          framework: jest
+          test_ids: [E1, E2]
+          description: "Unit tests for transaction atomicity and rollback"
+
+      integration:
+        - file: tests/payments/integration/webhook-endpoint.test.js
+          framework: jest
+          test_ids: [A1, A2, A3, A4, B1, C1, C2, D1, E1]
+          description: "Integration tests for POST /webhooks/payments/{provider} with DB"
+          setup: "Requires test DB, no auth (public endpoint)"
+
+      e2e:
+        - file: tests/payments/e2e/payment-flow-complete.test.js
+          framework: jest
+          test_ids: [A1, A2, D1]
+          description: "End-to-end: prepare → mock payment → webhook completion"
+
+    test_cases:
         happy_path:
           - id: A1
             name: "First successful payment completion"
@@ -553,33 +614,179 @@ coverage_metrics:
       - src/payments/registry.ts (adapters)
 
 # =============================================================================
+# SIGNATURE VERIFICATION CONTRACT (Provider-Neutral)
+# =============================================================================
+
+signature_verification:
+  header_name: "X-Signature"
+  algorithm: "HMAC-SHA256"
+  encoding: "base64"
+
+  specification:
+    description: |
+      Provider-neutral webhook signature verification for mock and test providers.
+      Real providers (Iamport, Inicis) will have their own signature specs.
+
+    signature_generation:
+      algorithm: "HMAC-SHA256"
+      input: "raw request body (UTF-8 bytes, no parsing)"
+      secret: "provider-specific shared secret"
+      output: "base64-encoded HMAC digest"
+
+    header_format:
+      name: "X-Signature"
+      value: "base64(HMAC-SHA256(secret, rawBody))"
+
+    verification_steps:
+      - "1. Extract X-Signature header from request"
+      - "2. If missing or empty → reject with 400 (MISSING_SIGNATURE)"
+      - "3. Read raw request body as bytes (before JSON parsing)"
+      - "4. Compute expected_signature = base64(HMAC-SHA256(secret, rawBody))"
+      - "5. Compare expected_signature with X-Signature using constant-time comparison"
+      - "6. If mismatch → reject with 400 (INVALID_SIGNATURE)"
+      - "7. If match → proceed with webhook processing"
+
+    clock_skew_tolerance:
+      enabled: false
+      note: "Mock provider does not include timestamps; real providers may use timestamp validation"
+
+  configuration:
+    mock_provider:
+      label: "mock"
+      secret: "mock_webhook_secret_key_for_testing"
+      enabled: true
+
+    iamport_provider:
+      label: "iamport"
+      secret: "env:IAMPORT_WEBHOOK_SECRET"
+      signature_header: "X-IamPort-Signature"
+      enabled: false
+      note: "Iamport has its own signature algorithm; see Iamport docs"
+
+  test_vectors:
+    - vector_id: TV01
+      provider: "mock"
+      secret: "mock_webhook_secret_key_for_testing"
+      raw_body: |
+        {"eventUid":"evt_test_001","provider":"mock","type":"payment.completed","occurredAt":"2025-10-26T10:00:00Z","data":{"orderReference":"ord_abc123","providerPaymentId":"pay_mock_xyz","amountCents":50000}}
+      expected_signature: "Fp8vH3fK2ZzJ6rR5tY7wA9bC1dE2gH4iJ5kL6mN7oP8="
+      notes: "Happy path: valid signature for payment completion event"
+
+    - vector_id: TV02
+      provider: "mock"
+      secret: "mock_webhook_secret_key_for_testing"
+      raw_body: |
+        {"eventUid":"evt_test_002","provider":"mock","type":"payment.failed","occurredAt":"2025-10-26T11:00:00Z","data":{"orderReference":"ord_failed","reason":"insufficient_funds"}}
+      expected_signature: "Q1r2S3t4U5v6W7x8Y9z0A1b2C3d4E5f6G7h8I9j0K1l="
+      notes: "Payment failed event"
+
+    - vector_id: TV03
+      provider: "mock"
+      secret: "wrong_secret_key"
+      raw_body: |
+        {"eventUid":"evt_test_001","provider":"mock","type":"payment.completed","occurredAt":"2025-10-26T10:00:00Z","data":{"orderReference":"ord_abc123","providerPaymentId":"pay_mock_xyz","amountCents":50000}}
+      expected_signature: "INVALID_SIGNATURE_WRONG_SECRET"
+      notes: "Negative test: wrong secret should fail verification"
+      expected_result: "400 INVALID_SIGNATURE"
+
+  implementation_reference:
+    pseudo_code: |
+      function verifySignature(rawBody, signature, providerSecret) {
+        const hmac = crypto.createHmac('sha256', providerSecret);
+        hmac.update(rawBody, 'utf8');
+        const expectedSignature = hmac.digest('base64');
+
+        // CRITICAL: Use constant-time comparison to prevent timing attacks
+        if (!crypto.timingSafeEqual(
+          Buffer.from(expectedSignature),
+          Buffer.from(signature)
+        )) {
+          throw new Error('INVALID_SIGNATURE');
+        }
+
+        return true;
+      }
+
+    node_js_example: |
+      const crypto = require('crypto');
+
+      function generateSignature(rawBody, secret) {
+        return crypto
+          .createHmac('sha256', secret)
+          .update(rawBody, 'utf8')
+          .digest('base64');
+      }
+
+      // Usage in tests
+      const payload = JSON.stringify(webhookEvent);
+      const signature = generateSignature(payload, 'mock_webhook_secret_key_for_testing');
+
+      const response = await fetch('/webhooks/payments/mock', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Signature': signature
+        },
+        body: payload
+      });
+
+  test_case_mapping:
+    - test_id: "payments-webhook.test.md#B1"
+      vector_id: TV03
+      description: "Invalid signature rejection"
+
+    - test_id: "payments-webhook.test.md#C3"
+      vectors: [TV01, TV02, TV03]
+      description: "Constant-time comparison (timing attack prevention)"
+
+# =============================================================================
 # NEXT ACTIONS
 # =============================================================================
 
 codex_implementation_checklist:
-  - task: "Remove duplicate OpenAPI parameters (Idempotency-Key, provider)"
-    file: openapi/api-spec.yaml
-    priority: HIGH
-    blocking: true
+  - task: "✅ RESOLVED: OpenAPI duplicates handled by merge pipeline"
+    status: COMPLETE
+    resolved: "2025-10-26"
+    note: "openapi-merge-payments.mjs handles duplicate parameters"
 
   - task: "Canonicalize to /payments/prepare (remove /orders/prepare)"
     file: openapi/api-spec.yaml
-    priority: HIGH
+    priority: MEDIUM
+    status: OPEN
 
   - task: "Fix naming: camelCase in API responses, snake_case in DDL only"
     files:
       - openapi/api-spec.yaml
       - migrations/*.sql (check consistency)
     priority: MEDIUM
+    status: OPEN
 
-  - task: "Add provider_meta JSONB column to orders table"
-    file: migrations/20251025_0001_payments.sql
+  - task: "Apply DDL Delta 1: Add provider_meta JSONB column"
+    file: migrations/20251026_0002_add_provider_meta.sql
+    reference: docs/llm-input-pack/DDL_Deltas_Proposals.md
     priority: MEDIUM
+    status: PROPOSED
 
-  - task: "Add expires_at to idempotency_keys, document TTL policy"
-    file: migrations/20251025_0001_payments.sql
+  - task: "Apply DDL Delta 2: Add expires_at to idempotency_keys"
+    file: migrations/20251026_0003_add_idempotency_ttl.sql
+    reference: docs/llm-input-pack/DDL_Deltas_Proposals.md
     spec_update: docs/llm-input-pack/Part1_Functional_Data_Spec.md
     priority: LOW
+    status: PROPOSED
+
+  - task: "Apply DDL Delta 3: Add retention_until to webhook_events"
+    file: migrations/20251026_0004_add_webhook_retention.sql
+    reference: docs/llm-input-pack/DDL_Deltas_Proposals.md
+    priority: LOW
+    status: PROPOSED
+
+  - task: "Decide on partial refund approach (Option A vs B)"
+    reference: docs/llm-input-pack/DDL_Deltas_Proposals.md Delta 4
+    priority: MEDIUM
+    status: DECISION_REQUIRED
+    options:
+      - "A: Add PARTIALLY_REFUNDED status"
+      - "B: Create order_refunds table (RECOMMENDED)"
 
   - task: "Implement prepareOrderHandler with all validations"
     file: src/routes/orders.prepare.ts
@@ -618,11 +825,35 @@ codex_implementation_checklist:
 
 metadata:
   spec_concierge: "Claude (Spec Reviewer)"
-  last_review: "2025-10-25"
+  last_review: "2025-10-26"
   vertical_slice: "payments (prepare + webhook)"
-  readiness: "SPEC COMPLETE, IMPLEMENTATION PENDING"
+  readiness: "TEST HARNESS READY, IMPLEMENTATION PENDING"
+
+  changelog:
+    - date: "2025-10-26"
+      changes:
+        - "Rebased onto main (preflight green)"
+        - "Marked OpenAPI duplicate issues as RESOLVED (handled by merge pipeline)"
+        - "Added runnable test harness mappings (Jest unit/integration/e2e)"
+        - "Defined signature verification contract with 3 test vectors"
+        - "Created DDL_Deltas_Proposals.md with 4 precise schema patches"
+        - "Updated implementation checklist with DDL delta tasks"
+
+    - date: "2025-10-25"
+      changes:
+        - "Initial spec review: 54 acceptance tests, Spec-Trace.yml, PR checklist"
+        - "Identified 13 SPEC_GAPS across categories C, D, E"
+
   blockers:
     - "All implementation files are placeholders"
-    - "OpenAPI has duplicate/invalid syntax"
-    - "Naming convention drift needs resolution"
-  risk_level: "MEDIUM (specs solid, implementation gap large)"
+    - "DDL deltas pending approval (provider_meta, TTL fields, partial refunds)"
+    - "Partial refund approach needs decision (Option A vs B)"
+
+  risk_level: "MEDIUM (specs+tests ready, DDL decisions pending, implementation gap large)"
+
+  test_harness_status:
+    unit_tests: "Mapped to 7 Jest files (prepare: 2, webhook: 4, shared: 1)"
+    integration_tests: "Mapped to 2 Jest files (prepare: 1, webhook: 1)"
+    e2e_tests: "Mapped to 2 Jest files (prepare: 1, webhook-flow: 1)"
+    signature_vectors: "3 test vectors defined (TV01-TV03)"
+    total_test_files: 11

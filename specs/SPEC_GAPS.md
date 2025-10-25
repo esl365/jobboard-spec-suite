@@ -6,13 +6,13 @@
 
   ### C) OpenAPI contract inconsistencies
 
-  - **Idempotency-Key duplicate parameters**: The main `api-spec.yaml` defines the `Idempotency-Key` header parameter **three times** (lines 387-397) for the same endpoint `/payments/prepare`. This is invalid OpenAPI syntax and will fail validation. **Fix:** Remove duplicate parameter definitions, keep single declaration.
+  - ~~**Idempotency-Key duplicate parameters**~~: **RESOLVED (2025-10-26, main)** — Handled by `openapi-merge-payments.mjs` fixup in preflight pipeline. The main `api-spec.yaml` source has duplicates (lines 387-397) but the merged/validated spec is correct.
 
-  - **Path duplication**: Both `/orders/prepare` (line 338) and `/payments/prepare` (line 376) exist in the spec. Part2 spec references `/payments/prepare`, but legacy Korean text uses `/orders/prepare`. **Decision required:** Canonicalize to `/payments/prepare` per Part2 (provider-neutral naming) and remove `/orders/prepare`.
+  - ~~**Provider parameter duplication**~~: **RESOLVED (2025-10-26, main)** — Handled by `openapi-merge-payments.mjs` fixup in preflight pipeline. Webhook endpoint duplicates (lines 443-451) are cleaned during merge phase.
 
-  - **Provider parameter duplication**: Webhook endpoint `/webhooks/payments/{provider}` has the `provider` path parameter defined **three times** (lines 443-451). **Fix:** Single parameter declaration.
+  - **Path duplication**: Both `/orders/prepare` (line 338) and `/payments/prepare` (line 376) exist in the spec. Part2 spec references `/payments/prepare`, but legacy Korean text uses `/orders/prepare`. **Decision required:** Canonicalize to `/payments/prepare` per Part2 (provider-neutral naming) and remove `/orders/prepare`. **(Status: Open, awaiting decision)**
 
-  - **Naming convention drift**: Part1 uses camelCase canonical names (`userId`, `orderId`, `amountCents`), OpenAPI snippet uses camelCase, but main `api-spec.yaml` mixes snake_case (`user_id`, `order_id`) in some schemas. Migration uses snake_case (PostgreSQL convention). **Decision:** Enforce camelCase in API contracts (OpenAPI response bodies), snake_case in DDL only. Update `api-spec.yaml` schemas to match Part1 canonical.
+  - **Naming convention drift**: Part1 uses camelCase canonical names (`userId`, `orderId`, `amountCents`), OpenAPI snippet uses camelCase, but main `api-spec.yaml` mixes snake_case (`user_id`, `order_id`) in some schemas. Migration uses snake_case (PostgreSQL convention). **Decision:** Enforce camelCase in API contracts (OpenAPI response bodies), snake_case in DDL only. Update `api-spec.yaml` schemas to match Part1 canonical. **(Status: Open, awaiting harmonization)**
 
   ### D) Data model gaps (payments)
 
