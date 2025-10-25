@@ -4,11 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "preflight": "node scripts/openapi-merge-payments.mjs && node scripts/openapi-lint.mjs openapi/api-spec.yaml && node scripts/spec-drift-check.mjs",
+    "preflight": "node scripts/preflight.mjs",
     "test": "echo \"(stub) tests pass\"",
-    "lint:openapi": "node scripts/openapi-lint.mjs openapi/api-spec.yaml"
+    "lint:openapi": "node scripts/openapi-lint.mjs openapi/api-spec.yaml",
+    "lint:openapi:redocly": "redocly lint openapi/api-spec.yaml"
   },
   "devDependencies": {
+    "@redocly/cli": "file:./tools/redocly/redocly-cli-2.8.0.tgz",
     "yaml": "^2.6.0"
   }
 }
