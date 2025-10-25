@@ -1,0 +1,18 @@
+diff --git a/specs-legacy/db_core_map.json b/specs-legacy/db_core_map.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..2cf6ee0cc0c31188b847ade3fa0909f0f6a269e9
+--- /dev/null
++++ b/specs-legacy/db_core_map.json
+@@ -0,0 +1,12 @@
++{
++  "board_albaguin": "job_posting_board",
++  "job_guin": "job_postings",
++  "job_com_guin": "posting_company_responses",
++  "job_com_guin_per": "candidate_applications",
++  "job_com_guin_per_log": "candidate_application_logs",
++  "job_guin_detail_view_log": "job_posting_views",
++  "job_guin_jump": "job_posting_promotions",
++  "job_guin_stats": "job_posting_metrics",
++  "job_per_guin_view": "candidate_posting_views",
++  "point_jangboo": "point_ledger"
++}

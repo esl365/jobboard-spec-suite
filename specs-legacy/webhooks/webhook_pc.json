@@ -1,0 +1,17 @@
+diff --git a/tests/payments/fixtures/legacy/allthegate/webhook_pc.json b/tests/payments/fixtures/legacy/allthegate/webhook_pc.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..c1caf4deb8f6242616c63349a2a37c43f1286dc5
+--- /dev/null
++++ b/tests/payments/fixtures/legacy/allthegate/webhook_pc.json
+@@ -0,0 +1,11 @@
++{
++  "StoreId": "aegis001",
++  "AuthTy": "card",
++  "SubTy": "isp",
++  "OrdNo": "ORDER20250314003",
++  "Amt": "44000",
++  "UserEmail": "buyer@example.com",
++  "ProdNm": "PremiumListing",
++  "AGS_HASHDATA": "***",
++  "RtnUrl": "https://example.com/pg_module/pg_db_update.php"
++}

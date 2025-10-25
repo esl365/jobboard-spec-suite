@@ -1,0 +1,23 @@
+diff --git a/tests/payments/fixtures/legacy/inicis/webhook_noti.json b/tests/payments/fixtures/legacy/inicis/webhook_noti.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..0e2a5d0ed57d23b9466cd62e3280e35f8d6ca8b2
+--- /dev/null
++++ b/tests/payments/fixtures/legacy/inicis/webhook_noti.json
+@@ -0,0 +1,17 @@
++{
++  "P_TID": "20250314123456***",
++  "P_MID": "INIhappystore",
++  "P_AUTH_DT": "20250314123000",
++  "P_STATUS": "00",
++  "P_TYPE": "CARD",
++  "P_OID": "ORDER20250314001",
++  "P_FN_CD1": "CC",
++  "P_FN_CD2": "01",
++  "P_FN_NM": "TestCard",
++  "P_AMT": "55000",
++  "P_UNAME": "Buyer***",
++  "P_RMESG1": "정상 처리",
++  "P_RMESG2": "승인",
++  "P_NOTI": "pay_type_option=company,oid=ORDER20250314001",
++  "P_AUTH_NO": "A12345"
++}

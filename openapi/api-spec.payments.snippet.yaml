@@ -1,0 +1,118 @@
+openapi: 3.0.3
+info:
+  title: Job Board API (payments snippet)
+  version: 0.1.0
+paths:
+  /payments/prepare:
+    post:
+      summary: Create/ensure an order (idempotent by Idempotency-Key)
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema:
+            type: string
+            minLength: 8
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId, amountCents, provider]
+              properties:
+                userId:
+                  type: string
+                amountCents:
+                  type: integer
+                  minimum: 0
+                provider:
+                  type: string
+                  example: mock
+                packageId:
+                  type: string
+                  nullable: true
+      responses:
+        "200":
+          description: ensured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "409":
+          description: idempotency collision
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /webhooks/payments/{provider}:
+    post:
+      summary: Provider webhook (exactly-once)
+      parameters:
+        - in: path
+          name: provider
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebhookEvent"
+      responses:
+        "200":
+          description: accepted (even on replay)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+        "400":
+          description: bad signature/payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  schemas:
+    Order:
+      type: object
+      required: [orderId, userId, status, totalAmountCents]
+      properties:
+        orderId: { type: string }
+        userId: { type: string }
+        status:
+          type: string
+          enum: [PENDING, COMPLETED, FAILED, REFUNDED]
+        totalAmountCents: { type: integer }
+        provider: { type: string }
+        providerPaymentId:
+          type: string
+          nullable: true
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    WebhookEvent:
+      type: object
+      required: [eventUid, provider, type, occurredAt]
+      properties:
+        eventUid:
+          type: string
+          description: dedupe key
+        provider: { type: string }
+        type:
+          type: string
+          enum: [payment.completed, payment.failed, payment.refunded]
+        occurredAt: { type: string, format: date-time }
+        data: { type: object, additionalProperties: true }
+        signature: { type: string }
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string }
+        message: { type: string }

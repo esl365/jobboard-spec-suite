@@ -1,0 +1,13 @@
+{
+  "name": "spec-coding-jobboard",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "preflight": "node scripts/openapi-merge-payments.mjs && node scripts/spec-drift-check.mjs",
+    "test": "echo \"(stub) tests pass\""
+  },
+  "devDependencies": {
+    "yaml": "^2.6.0"
+  }
+}
