@@ -383,6 +383,18 @@ paths:
           schema:
             type: string
             minLength: 8
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema:
+            type: string
+            minLength: 8
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema:
+            type: string
+            minLength: 8
       requestBody:
         required: true
         content:
@@ -422,6 +434,16 @@ paths:
     post:
       summary: Provider webhook (exactly-once)
       parameters:
+        - in: path
+          name: provider
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: provider
+          required: true
+          schema:
+            type: string
         - in: path
           name: provider
           required: true

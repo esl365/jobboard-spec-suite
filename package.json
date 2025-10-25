@@ -4,8 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "preflight": "node scripts/openapi-merge-payments.mjs && node scripts/spec-drift-check.mjs",
-    "test": "echo \"(stub) tests pass\""
+    "preflight": "node scripts/openapi-merge-payments.mjs && node scripts/openapi-lint.mjs openapi/api-spec.yaml && node scripts/spec-drift-check.mjs",
+    "test": "echo \"(stub) tests pass\"",
+    "lint:openapi": "node scripts/openapi-lint.mjs openapi/api-spec.yaml"
   },
   "devDependencies": {
     "yaml": "^2.6.0"
