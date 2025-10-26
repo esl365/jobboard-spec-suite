@@ -1,5 +1,7 @@
 # Spec↔OpenAPI↔DDL Drift Report
 
+Summary: mismatches=0
+
 - [OK] OpenAPI path POST /payments/prepare
 - [OK] OpenAPI path POST /webhooks/payments/{provider}
 - [OK] DDL table orders

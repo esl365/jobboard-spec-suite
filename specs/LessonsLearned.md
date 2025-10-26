@@ -1,1 +1,1 @@
-<!-- placeholder: specs\LessonsLearned.md -->
+- Vendoring the lint tool avoids repeated offline failures; prefer repo-local binaries in CI and fall back to globals/offline only when necessary.

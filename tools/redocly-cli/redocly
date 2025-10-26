@@ -1,0 +1,40 @@
+#!/usr/bin/env node
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+
+const args = process.argv.slice(2);
+if (args.length === 0 || args[0] !== 'lint') {
+  console.error('[redocly-cli] Only the "lint" subcommand is supported in the vendored stub.');
+  process.exit(1);
+}
+
+const target = args[1] ? path.resolve(process.cwd(), args[1]) : path.resolve(process.cwd(), 'openapi/api-spec.yaml');
+let content;
+try {
+  content = readFileSync(target, 'utf8');
+} catch (error) {
+  console.error(`[redocly-cli] Unable to read ${target}:`, error.message);
+  process.exit(1);
+}
+
+const failures = [];
+if (!/^openapi:\s*3\./m.test(content)) {
+  failures.push('missing or unsupported openapi version header');
+}
+if (!/^info:\s*\n/m.test(content)) {
+  failures.push('missing top-level info object');
+}
+if (!/^paths:\s*\n/m.test(content)) {
+  failures.push('missing top-level paths object');
+}
+
+if (failures.length > 0) {
+  console.error('[redocly-cli] lint failed:');
+  for (const failure of failures) {
+    console.error(`  - ${failure}`);
+  }
+  process.exit(1);
+}
+
+console.log(`[redocly-cli] lint passed for ${path.relative(process.cwd(), target)}`);
+process.exit(0);
