@@ -74,11 +74,15 @@ Create the foundational documentation and automation for the Prompt Queue (Claud
   - Serves as a reference for future prompts
 
 **Evidence:**
-- Commit: (will be added after commit)
+- Commit: f28aae8ccf52338a6b3ff7a785827264af15f649
 - Branch: `claude/prompt-queue-subscribe-011CUVZKrycpBAkGkQ9BHdST`
+- Remote: https://github.com/esl365/jobboard-spec-suite/tree/claude/prompt-queue-subscribe-011CUVZKrycpBAkGkQ9BHdST
 - Files:
   - docs/PROMPT_QUEUE_AUTOMATION.md:1-200+
   - prompts/P0001-claude-prompt-queue-example.md:1-100+
+  - scripts/scan-completed-prompts.mjs
+  - scripts/update-inbox-issue.mjs
+  - .github/workflows/prompt-queue-update.yml
 
 **Notes:**
 - The PROMPT_QUEUE_AUTOMATION.md provides a complete reference for teams to:
