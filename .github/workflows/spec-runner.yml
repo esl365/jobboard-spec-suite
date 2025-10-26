@@ -1,22 +1,42 @@
 name: spec-runner
+
 on:
   push:
-    branches: ['**']
+    branches: ["**"]
   pull_request:
-    branches: ['**']   # 최소한 main 은 포함되도록 해도 됨
+    branches: ["**"]
   workflow_dispatch:
+
 jobs:
   ci:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
-          node-version: "20"
-      - run: npm ci || npm i
-      - run: node scripts/openapi-merge-payments.mjs
-      - run: node scripts/openapi-lint.mjs openapi/api-spec.yaml
-- run: node scripts/spec-drift-check.mjs
-      - run: npm test --silent
+          fetch-depth: 0
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
 
+      - name: Install deps
+        run: npm ci || npm i
+
+      # (선택) 리포에 vendored redocly 바이너리가 있는 경우만 실행
+      - name: Make vendored redocly executable (if present)
+        run: chmod +x tools/redocly-cli/redocly || true
+
+      - name: Merge payments snippet
+        run: node scripts/openapi-merge-payments.mjs
+
+      - name: Lint OpenAPI
+        run: node scripts/openapi-lint.mjs openapi/api-spec.yaml
+
+      - name: Spec/OpenAPI↔DDL drift check
+        run: node scripts/spec-drift-check.mjs
+
+      - name: Tests
+        run: npm test --silent
