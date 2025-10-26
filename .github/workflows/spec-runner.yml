@@ -1,22 +1,31 @@
 name: spec-runner
+
 on:
-  push:
-    branches: ['**']
   pull_request:
-    branches: ['**']   # 최소한 main 은 포함되도록 해도 됨
-  workflow_dispatch:
+    branches: ['**']     # PR 에서만 자동 실행 (중복 방지)
+  workflow_dispatch:      # 수동 실행 허용
+
 jobs:
   ci:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: '20'
+          cache: 'npm'
+
       - run: npm ci || npm i
-      - run: node scripts/openapi-merge-payments.mjs
-      - run: node scripts/openapi-lint.mjs openapi/api-spec.yaml
-- run: node scripts/spec-drift-check.mjs
-      - run: npm test --silent
 
+      - name: Merge payments snippet into OpenAPI
+        run: node scripts/openapi-merge-payments.mjs
 
+      - name: Lint OpenAPI (vendored Redocly or offline)
+        run: node scripts/openapi-lint.mjs openapi/api-spec.yaml
+
+      - name: Spec drift check (OpenAPI ↔ DDL)
+        run: node scripts/spec-drift-check.mjs
+
+      - name: Tests
+        run: npm test --silent
