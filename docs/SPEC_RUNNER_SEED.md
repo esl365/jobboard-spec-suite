@@ -15,3 +15,6 @@ On failure, update `specs/SPEC_GAPS.md` (context/impact/proposal) and STOP.
 - `node scripts/openapi-merge-payments.mjs`
 - `node scripts/spec-drift-check.mjs`
 Return report paths and propose smallest patches.
+
+**Claude Inbox (prompt queue)**
+Process prompts from the Claude Inbox issue (lowest numbered first). After completion, add `## DONE (date)` section with summary, changes, evidence, and notes. See `docs/PROMPT_QUEUE_AUTOMATION.md`.

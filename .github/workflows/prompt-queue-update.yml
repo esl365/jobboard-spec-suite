@@ -1,0 +1,82 @@
+name: prompt-queue-update
+
+# Automatically update Claude Inbox issue when prompts are completed
+# Triggered when prompt files in prompts/ directory are modified
+
+on:
+  push:
+    branches:
+      - main
+      - 'claude/**'
+    paths:
+      - 'prompts/P*.md'
+
+jobs:
+  update-inbox:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for detecting changes
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Scan completed prompts
+        id: scan
+        run: |
+          echo "Scanning for completed prompts..."
+          node scripts/scan-completed-prompts.mjs > completed.json
+          cat completed.json
+
+          # Check if there are any completed prompts
+          if [ -s completed.json ] && [ "$(cat completed.json)" != "[]" ]; then
+            echo "has_completed=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_completed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update Claude Inbox issue
+        if: steps.scan.outputs.has_completed == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INBOX_ISSUE_NUMBER: ${{ vars.CLAUDE_INBOX_ISSUE_NUMBER || '1' }}
+        run: |
+          echo "Updating Claude Inbox issue #${INBOX_ISSUE_NUMBER}..."
+          node scripts/update-inbox-issue.mjs completed.json "${INBOX_ISSUE_NUMBER}"
+
+      - name: Comment on commit
+        if: steps.scan.outputs.has_completed == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const completed = JSON.parse(fs.readFileSync('completed.json', 'utf8'));
+
+            if (completed.length > 0) {
+              const promptList = completed.map(p => `- ${p.number}: ${p.title}`).join('\n');
+              const comment = `### Prompt Queue Update\n\nCompleted prompts detected:\n${promptList}\n\nClaude Inbox issue has been updated.`;
+
+              github.rest.repos.createCommitComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                commit_sha: context.sha,
+                body: comment
+              });
+            }
+
+      - name: Summary
+        run: |
+          echo "## Prompt Queue Update Summary" >> $GITHUB_STEP_SUMMARY
+          if [ -s completed.json ] && [ "$(cat completed.json)" != "[]" ]; then
+            echo "✅ Found completed prompts" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Completed Prompts" >> $GITHUB_STEP_SUMMARY
+            node -e "const data = require('./completed.json'); data.forEach(p => console.log('- ' + p.number + ': ' + p.title));" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "ℹ️ No new completed prompts detected" >> $GITHUB_STEP_SUMMARY
+          fi
