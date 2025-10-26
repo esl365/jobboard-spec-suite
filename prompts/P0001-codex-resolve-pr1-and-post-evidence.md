@@ -82,3 +82,11 @@ DONE (to be filled by codex)
 - code pointers comment:
 - ping comment:
 - drift status: [0 or >0]
+---
+## DONE (2025-10-26)
+
+- Conflicts resolved; merged `main` → `codex/run-pre-flight-and-log-issues`.
+- GAP-001 (hex→base64) ✅ RESOLVED.
+- GAP-002 (rawBody capture) ✅ RESOLVED.
+- Preflight/Test ✅ GREEN; drift header shows `mismatches: 0`.
+- Evidence & code pointers posted on PR #1.
