@@ -2,6 +2,7 @@
 // scripts/preflight.mjs
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { existsSync } from "node:fs";
 import path from "node:path";
 
 const root = path.dirname(fileURLToPath(import.meta.url));
@@ -22,8 +23,13 @@ const step = async (name, fn) => {
 // 1) merge (payments snippet -> main)
 await step("merge", () => run("node", [path.join(root, "openapi-merge-payments.mjs")]));
 
-// 2) normalize/fixup (license/security/opIds/params/4xx)
-await step("openapi-fixup", () => run("node", [path.join(root, "openapi-fixup.mjs")]));
+// 2) normalize/fixup (license/security/opIds/params/4xx) - optional if script exists
+const fixupScript = path.join(root, "openapi-fixup.mjs");
+if (existsSync(fixupScript)) {
+  await step("openapi-fixup", () => run("node", [fixupScript]));
+} else {
+  console.log("\n[preflight] >>> openapi-fixup (skipped - script not found)");
+}
 
 // 3) lint: prefer Redocly (vendored). If not runnable, fallback to lightweight linter.
 let lintOK = await run("npx", ["--no-install", "@redocly/cli", "lint", "openapi/api-spec.yaml"]);

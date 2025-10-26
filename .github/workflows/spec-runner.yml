@@ -11,7 +11,7 @@ jobs:
       - run: npm ci || npm i
       - run: node scripts/openapi-merge-payments.mjs
       - run: node scripts/openapi-lint.mjs openapi/api-spec.yaml
-- run: node scripts/spec-drift-check.mjs
+      - run: node scripts/spec-drift-check.mjs
       - run: npm test --silent
 
 
