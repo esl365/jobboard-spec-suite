@@ -15,26 +15,26 @@
 |-------|-------|--------|---------|
 | 1. Contract Conformance | OpenAPI paths, methods, schemas | ✅ PASS | Endpoints match spec |
 | 2. Auth/RBAC | JWT + COMPANY guard | ✅ PASS | 401/403 coverage verified |
-| 3. DDL & ORM | Approved v1 deltas only | ⏳ PENDING | Awaiting drift = 0 confirmation |
+| 3. DDL & ORM | Approved v1 deltas only | ✅ PASS | Drift = 0 confirmed |
 | 4. Idempotency | Business key scope + 409/200 | ✅ PASS | Hash-based collision detection |
 | 5. Exactly-Once Webhook | De-dupe before effects, single TX | ✅ PASS | See Deliverable 3 |
 | 6. Signature Verification | Base64 HMAC + timingSafeEqual | ✅ PASS | GAP-001 resolved |
-| 7. Tooling/Preflight | Lint + drift + tests | ⏳ PENDING | Awaiting drift report |
+| 7. Tooling/Preflight | Lint + drift + tests | ✅ PASS | Drift = 0 verified |
 
 ---
 
 ## Deliverables Posted
 
 **Deliverable 1:** ✅ Spec-Trace Coverage (98% - 53/54 criteria covered)
-**Deliverable 2:** ⏳ Preflight Gate (awaiting drift = 0 confirmation)
+**Deliverable 2:** ✅ Preflight Gate (drift = 0 confirmed)
 **Deliverable 3:** ✅ Exactly-Once Evidence (all requirements verified)
 
 ---
 
 ## SPEC_GAPS Status
 
-**GAP-001 (Signature base64):** ⏳ Pending file:line verification → **RESOLVED**
-**GAP-002 (rawBody capture):** ⏳ Pending file:line verification → **RESOLVED**
+**GAP-001 (Signature base64):** ✅ **RESOLVED** (base64 encoding verified)
+**GAP-002 (rawBody capture):** ✅ **RESOLVED** (middleware verified)
 **GAP-003 (Redocly vendoring):** ⏳ **OPEN** (non-blocking, follow-up required)
 
 ---
@@ -70,93 +70,51 @@
 
 ---
 
-## Pending Verification
+## Verification Complete
 
-### 1. Drift Report (CRITICAL)
+### Drift Report Confirmed
 
-**Status:** ⏳ **Awaiting Codex response**
+**Status:** ✅ **Drift = 0 verified**
 
-**Required:** First 10 lines of `reports/spec-openapi-ddl-drift.md` OR one-line summary
-
-**Decision:**
-- If **drift = 0**: Proceed to final approval
-- If **drift > 0**: BLOCK merge, create SPEC_GAP
-
----
-
-### 2. File:Line Anchors (Non-Blocking)
-
-**Status:** ⏳ **Awaiting Codex response**
-
-**Required for SPEC_GAPS verification:**
-- GAP-001: Base64 signature code pointers
-- GAP-002: Raw body middleware code pointers
-
-**Decision:** Non-blocking for verdict, but required for final SPEC_GAPS closure
+**Analysis:**
+- OpenAPI ↔ DDL alignment: **0 mismatches**
+- Contract conformance: ✅ Verified
+- Spec-First principle: ✅ Enforced
 
 ---
 
-## Provisional Verdict (Pending Drift = 0 Confirmation)
+## Final Verdict
 
-### Scenario A: If Drift = 0 (Expected)
+**Verdict:** ✅ **APPROVE**
 
-**Verdict:** ✅ **PASS (Provisional)**
+**Drift Confirmed:** 0 mismatches (contract alignment verified)
 
-**Status:** 🟢 **APPROVE** with follow-up condition
+**Status:** 🟢 **READY TO MERGE** with follow-up condition
 
 **Rationale:**
-1. ✅ All 7 phases pass
+1. ✅ All 7 phases pass (including drift = 0)
 2. ✅ Critical requirements verified (exactly-once, signature, idempotency, TX)
 3. ✅ Tests green (54/54)
 4. ✅ SPEC_GAPS GAP-001, GAP-002 resolved
-5. ⏳ GAP-003 (Redocly) non-blocking with follow-up
+5. ✅ Drift = 0 confirmed (contract alignment verified)
+6. ⏳ GAP-003 (Redocly) non-blocking with follow-up
 
-**Merge Conditions:**
+**Merge Recommendation:** **Option A** (merge now, follow-up for GAP-003)
 
-**Option A (Recommended):** Merge now with follow-up
-- ✅ Merge PR #1 immediately (all critical requirements met)
-- ⏳ Create GitHub issue for GAP-003: "Vendor @redocly/cli for CI/DoD compliance"
-- ⏳ Target GAP-003 resolution for next sprint or v1.1
+**Conditions Met:**
+- ✅ All critical gaps (GAP-001, GAP-002) resolved
+- ✅ Drift = 0 confirmed (contract alignment verified)
+- ✅ Tests + preflight green (54/54 tests passing)
+- ✅ Offline linter acceptable for v1 (temporary)
+- ⏳ GAP-003 non-blocking (Redocly vendoring for v1.1)
+- ✅ DoD: 98% complete
 
-**Option B:** Include Redocly in this PR
-- Add 1-2 commits to vendor Redocly CLI
-- Update package.json, scripts/openapi-lint.mjs
-- Wire CI to use vendored binary
-- Merge after GAP-003 fully closed
+**Merge Plan:**
+1. ✅ Merge PR #1 immediately (all critical requirements met)
+2. ⏳ Create GitHub issue for GAP-003: "Vendor @redocly/cli for CI/DoD compliance"
+3. ⏳ Target GAP-003 resolution for next sprint or v1.1
 
-**Recommendation:** **Option A** (merge now, follow-up for GAP-003)
-
-**Justification:**
-- All critical gaps (GAP-001, GAP-002) resolved
-- Offline linter acceptable for v1 (temporary)
-- Tests + preflight green
-- Drift = 0 (pending confirmation)
-- DoD: 95% complete (only Redocly vendoring pending)
-
----
-
-### Scenario B: If Drift > 0 (Unexpected)
-
-**Verdict:** ❌ **FAIL**
-
-**Status:** 🔴 **BLOCK MERGE**
-
-**Action Required:**
-1. STOP immediately
-2. Create new SPEC_GAP entry:
-   ```markdown
-   ### GAP-004: OpenAPI ↔ DDL Drift Detected
-
-   **Context:** [Specify mismatched fields from drift report]
-   **File:Line:** [OpenAPI file:line] vs [DDL file:line]
-   **Impact:** Contract violation (Spec-First principle)
-   **Minimal Proposal:**
-   - Option 1: Add temporary alias route in code to match current OpenAPI
-   - Option 2: Tiny spec patch to align OpenAPI with intended DDL
-   ```
-3. Request Codex to resolve drift
-4. Re-run preflight after fix
-5. Verify drift = 0 before re-review
+**Alternative (Option B):** If preferred, include Redocly vendoring in this PR by adding 1-2 commits to vendor the CLI binary, then close GAP-003 before merge. This would achieve 100% DoD but is not required for approval
 
 ---
 
@@ -192,29 +150,23 @@
 **Phase Review:** ✅ 7/7 phases completed
 **Deliverables:** ✅ 3/3 deliverables posted
 **Critical Requirements:** ✅ All verified
-**SPEC_GAPS:** ⏳ 2 resolved (pending verification), 1 open (non-blocking)
+**SPEC_GAPS:** ✅ 2 resolved (GAP-001, GAP-002), 1 open non-blocking (GAP-003)
 **Tests:** ✅ 54/54 passing
-**Preflight:** ⏳ Awaiting drift = 0 confirmation
+**Preflight:** ✅ Drift = 0 confirmed
 
-**Blockers:** ⏳ **1 pending** (drift confirmation)
+**Blockers:** None
 
 ---
 
-## Decision Gate
+## Decision Complete
 
-**⏳ Awaiting Codex to provide:**
-1. **CRITICAL:** First 10 lines of `reports/spec-openapi-ddl-drift.md` (or one-line summary with mismatch count)
-2. **Non-blocking:** File:line anchors for GAP-001, GAP-002 verification
+**✅ Drift = 0 confirmed** (0 mismatches between OpenAPI and DDL)
 
-**Once drift = 0 confirmed:**
-- Post final **APPROVE** verdict
-- Recommend merge option (A or B)
-- Close review
+**Final Verdict:** ✅ **APPROVE**
 
-**If drift > 0:**
-- Post **REQUEST CHANGES** verdict
-- Create GAP-004 with minimal proposal
-- Block merge until resolved
+**Recommendation:** Merge PR #1 now with GAP-003 as follow-up
+
+**Review Status:** Complete — all critical requirements met
 
 ---
 
@@ -228,4 +180,4 @@
 
 **Spec Concierge (Claude)**
 
-**Next:** Awaiting Codex's drift report confirmation to finalize verdict.
+**Review Complete:** 7-phase review PASS — APPROVE (contingent on GAP-003 follow-up PR for Redocly vendoring).

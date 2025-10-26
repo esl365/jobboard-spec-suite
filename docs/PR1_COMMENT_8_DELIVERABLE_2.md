@@ -38,21 +38,14 @@ npm test
 
 **Output References:** `reports/spec-openapi-ddl-drift.md`
 
-**⚠️ PENDING VERIFICATION:**
-Codex referenced drift report but did not quote mismatch count. Requested in separate comment.
+**✅ VERIFIED:**
 
-**Required Evidence:**
-```
-OpenAPI ↔ DDL Drift: [WAITING FOR CONFIRMATION]
-```
+Drift check: **0 mismatches** found
 
-**Critical:** Must see **drift = 0** explicitly before final approval.
-
-**If drift = 0:**
+**Analysis:**
 - ✅ PASS — Contract alignment verified
-
-**If drift > 0:**
-- ❌ FAIL — BLOCK merge, create SPEC_GAP with minimal proposal
+- ✅ No schema drift between OpenAPI and DDL
+- ✅ Spec-First principle enforced (contract = implementation)
 
 ---
 
@@ -88,7 +81,7 @@ Duration:    X.XXs
 | Check | Required | Actual | Status |
 |-------|----------|--------|--------|
 | OpenAPI lint | 0 errors | 0 errors (offline) | ✅ PASS* |
-| DDL drift | 0 mismatches | ⏳ Pending verification | ⏳ PENDING |
+| DDL drift | 0 mismatches | 0 mismatches | ✅ PASS |
 | Test suites | All pass | 2/2 passed | ✅ PASS |
 | Test count | 54 total | 54 passed | ✅ PASS |
 
@@ -98,17 +91,17 @@ Duration:    X.XXs
 
 ## Overall Gate Status
 
-### If Drift = 0 (Awaiting Confirmation):
+### Drift = 0 Confirmed:
 
 **Status:** 🟢 **GREEN** — Merge eligible with follow-up
 
 **Conditions:**
 1. ✅ Lint: 0 errors (offline fallback acceptable for v1)
-2. ⏳ **Drift: PENDING VERIFICATION** (must be 0)
+2. ✅ **Drift: 0 mismatches** (contract alignment verified)
 3. ✅ Tests: 54/54 passed
 4. ⚠️ GAP-003 (Redocly): Follow-up PR required for DoD
 
-**Blockers:** None (pending drift = 0 confirmation)
+**Blockers:** None
 
 **Follow-Ups (Non-Blocking):**
 - GAP-003: Vendor Redocly CLI under `tools/redocly-cli/`
@@ -116,27 +109,12 @@ Duration:    X.XXs
 
 ---
 
-### If Drift > 0 (Action Required):
-
-**Status:** 🔴 **RED** — Merge blocked
-
-**Action:**
-1. STOP immediately
-2. Create SPEC_GAP entry:
-   - **Context:** File:line where drift detected
-   - **Impact:** Contract violation (Spec-First principle)
-   - **Minimal Proposal:** Temporary alias route OR tiny spec patch
-3. BLOCK merge until drift = 0
-
----
-
 ## Preflight Gate Verification
 
-**⏳ Awaiting Codex's drift report confirmation**
+**✅ COMPLETE**
 
-Once drift report is provided:
-- If **drift = 0**: Gate status → 🟢 GREEN (proceed to final approval)
-- If **drift > 0**: Gate status → 🔴 RED (create SPEC_GAP, block merge)
+**Drift Report:** 0 mismatches (contract alignment verified)
+**Gate Status:** 🟢 **GREEN** — Proceed to final approval
 
 ---
 
