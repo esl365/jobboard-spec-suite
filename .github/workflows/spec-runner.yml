@@ -1,5 +1,10 @@
 name: spec-runner
-on: [push, pull_request]
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: ['**']   # 최소한 main 은 포함되도록 해도 됨
+  workflow_dispatch:
 jobs:
   ci:
     runs-on: ubuntu-latest
