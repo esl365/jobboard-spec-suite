@@ -1,22 +1,37 @@
 name: spec-runner
+
 on:
   push:
-    branches: ['**']
+    branches: ['**']          # 모든 브랜치 푸시 시 실행
   pull_request:
-    branches: ['**']   # 최소한 main 은 포함되도록 해도 됨
+    branches: ['**']          # PR 시 실행(Branch rulesets로 main에 필수 체크 걸면 충분)
   workflow_dispatch:
+
 jobs:
   ci:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    concurrency:
+      group: spec-runner-${{ github.ref }}
+      cancel-in-progress: true
+
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0              # drift/버전 비교 필요시 안전
+
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: '20'
+          cache: 'npm'                # 캐시로 속도 ↑
+
       - run: npm ci || npm i
+
+      # (vendored redocly 를 쓴다면 실행권한 보정이 필요할 수 있음)
+      - run: chmod +x tools/redocly-cli/redocly || true
+
       - run: node scripts/openapi-merge-payments.mjs
       - run: node scripts/openapi-lint.mjs openapi/api-spec.yaml
-- run: node scripts/spec-drift-check.mjs
+      - run: node scripts/spec-drift-check.mjs
       - run: npm test --silent
-
-
