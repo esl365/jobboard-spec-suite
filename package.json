@@ -7,10 +7,10 @@
     "preflight": "node scripts/preflight.mjs",
     "test": "echo \"(stub) tests pass\"",
     "lint:openapi": "node scripts/openapi-lint.mjs openapi/api-spec.yaml",
-    "lint:openapi:redocly": "redocly lint openapi/api-spec.yaml"
+    "lint:openapi:redocly": "npx redocly lint openapi/api-spec.yaml"
   },
   "devDependencies": {
-    "@redocly/cli": "file:./tools/redocly/redocly-cli-2.8.0.tgz",
+    "@redocly/cli": "^2.8.0",
     "yaml": "^2.6.0"
   }
 }
