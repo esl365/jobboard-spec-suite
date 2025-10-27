@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>결제 완료 안내</title>
+  <style>
+    body {
+      font-family: 'Malgun Gothic', '맑은 고딕', Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+      border-radius: 10px 10px 0 0;
+    }
+    .content {
+      background: #f9f9f9;
+      padding: 30px;
+      border-radius: 0 0 10px 10px;
+    }
+    .payment-box {
+      background: white;
+      border: 2px solid #667eea;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 10px;
+    }
+    .payment-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .payment-row:last-child {
+      border-bottom: none;
+      font-weight: bold;
+      font-size: 18px;
+      color: #667eea;
+    }
+    .button {
+      display: inline-block;
+      padding: 12px 30px;
+      background: #667eea;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      margin: 20px 0;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 12px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>✅ 결제가 완료되었습니다</h1>
+  </div>
+  <div class="content">
+    <p>안녕하세요!</p>
+
+    <p>결제가 성공적으로 완료되었습니다. 감사합니다!</p>
+
+    <div class="payment-box">
+      <div class="payment-row">
+        <span>주문번호</span>
+        <span><strong>{{orderNumber}}</strong></span>
+      </div>
+      <div class="payment-row">
+        <span>상품명</span>
+        <span>{{description}}</span>
+      </div>
+      <div class="payment-row">
+        <span>결제금액</span>
+        <span style="color: #667eea;">{{amount}}원</span>
+      </div>
+    </div>
+
+    <p>구매하신 서비스를 바로 이용하실 수 있습니다. 영수증은 아래 버튼을 통해 확인하실 수 있습니다.</p>
+
+    <center>
+      <a href="{{receiptUrl}}" class="button">영수증 보기</a>
+    </center>
+
+    <p><strong>유의사항:</strong></p>
+    <ul>
+      <li>본 메일은 결제 완료 확인용이며, 세금계산서가 아닙니다.</li>
+      <li>세금계산서가 필요하신 경우 고객센터로 문의해주세요.</li>
+    </ul>
+
+    <p>감사합니다.<br>잡보드 팀 드림</p>
+  </div>
+  <div class="footer">
+    <p>© {{year}} 잡보드. All rights reserved.</p>
+    <p>결제 완료 시 자동 발송되는 안내 메일입니다.</p>
+  </div>
+</body>
+</html>

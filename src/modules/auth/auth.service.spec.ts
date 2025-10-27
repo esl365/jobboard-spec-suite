@@ -4,6 +4,7 @@ import { UnauthorizedException, ConflictException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { DeviceSessionService } from './services/device-session.service';
 import { PrismaService } from '../../common/prisma.service';
+import { EmailService } from '../email/email.service';
 import { mockDeep, DeepMockProxy } from 'jest-mock-extended';
 import * as bcrypt from 'bcryptjs';
 
@@ -38,6 +39,15 @@ describe('AuthService', () => {
             updateDeviceActivity: jest.fn(),
             removeDevice: jest.fn(),
             blacklistToken: jest.fn(),
+          },
+        },
+        {
+          provide: EmailService,
+          useValue: {
+            sendWelcomeEmail: jest.fn().mockResolvedValue(true),
+            sendApplicationStatusEmail: jest.fn().mockResolvedValue(true),
+            sendPaymentConfirmationEmail: jest.fn().mockResolvedValue(true),
+            sendApplicationReceivedEmail: jest.fn().mockResolvedValue(true),
           },
         },
       ],

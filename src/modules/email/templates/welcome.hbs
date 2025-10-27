@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>잡보드에 오신 것을 환영합니다</title>
+  <style>
+    body {
+      font-family: 'Malgun Gothic', '맑은 고딕', Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+      border-radius: 10px 10px 0 0;
+    }
+    .content {
+      background: #f9f9f9;
+      padding: 30px;
+      border-radius: 0 0 10px 10px;
+    }
+    .button {
+      display: inline-block;
+      padding: 12px 30px;
+      background: #667eea;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      margin: 20px 0;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 12px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🎉 환영합니다!</h1>
+  </div>
+  <div class="content">
+    <p>안녕하세요, <strong>{{username}}</strong>님!</p>
+
+    <p>잡보드에 {{userType}}으로 가입하신 것을 진심으로 환영합니다.</p>
+
+    <p>잡보드는 구직자와 기업을 연결하는 최고의 채용 플랫폼입니다. 다음과 같은 기능을 이용하실 수 있습니다:</p>
+
+    <ul>
+      <li>📝 이력서 작성 및 관리</li>
+      <li>🔍 맞춤형 채용 공고 검색</li>
+      <li>💼 간편한 온라인 지원</li>
+      <li>📊 지원 현황 실시간 추적</li>
+    </ul>
+
+    <p>지금 바로 로그인하여 여러분의 커리어 여정을 시작해보세요!</p>
+
+    <center>
+      <a href="{{loginUrl}}" class="button">로그인하기</a>
+    </center>
+
+    <p>궁금하신 사항이 있으시면 언제든지 문의해주세요.</p>
+
+    <p>감사합니다.<br>잡보드 팀 드림</p>
+  </div>
+  <div class="footer">
+    <p>© {{year}} 잡보드. All rights reserved.</p>
+    <p>이 이메일은 회원가입 시 자동 발송되었습니다.</p>
+  </div>
+</body>
+</html>
