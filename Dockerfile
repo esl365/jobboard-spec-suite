@@ -1,9 +1,12 @@
 # ========================================
 # Stage 1: Dependencies
 # ========================================
-FROM node:20-alpine AS deps
+FROM node:20-slim AS deps
 
 WORKDIR /app
+
+# Install OpenSSL for Prisma
+RUN apt-get update && apt-get install -y openssl libssl3 && rm -rf /var/lib/apt/lists/*
 
 # Copy package files
 COPY package*.json ./
@@ -16,9 +19,12 @@ RUN npm ci --only=production && \
 # ========================================
 # Stage 2: Build
 # ========================================
-FROM node:20-alpine AS builder
+FROM node:20-slim AS builder
 
 WORKDIR /app
+
+# Install OpenSSL for Prisma
+RUN apt-get update && apt-get install -y openssl libssl3 && rm -rf /var/lib/apt/lists/*
 
 # Copy package files
 COPY package*.json ./
@@ -39,14 +45,14 @@ RUN npm run build
 # ========================================
 # Stage 3: Production
 # ========================================
-FROM node:20-alpine AS production
+FROM node:20-slim AS production
 
-# Install dumb-init and OpenSSL 1.1 for Prisma compatibility
-RUN apk add --no-cache dumb-init openssl1.1-compat
+# Install dumb-init and OpenSSL for Prisma compatibility
+RUN apt-get update && apt-get install -y dumb-init openssl libssl3 && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nestjs -u 1001
+RUN groupadd -g 1001 nodejs && \
+    useradd -r -u 1001 -g nodejs nestjs
 
 WORKDIR /app
 
