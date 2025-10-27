@@ -198,6 +198,7 @@ model Resume {
   educationHistory  Json?    @map("education_history")
   workExperience    Json?    @map("work_experience")
   skills            Json?
+  filePath          String?  @map("file_path") @db.VarChar(500)
   isDefault         Boolean  @default(false) @map("is_default")
   createdAt         DateTime @default(now()) @map("created_at")
   updatedAt         DateTime @updatedAt @map("updated_at")
