@@ -7,6 +7,7 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { RedisService } from './services/redis.service';
 import { DeviceSessionService } from './services/device-session.service';
+import { RolesGuard } from './guards/roles.guard';
 import { PrismaService } from '../../common/prisma.service';
 
 @Module({
@@ -32,8 +33,16 @@ import { PrismaService } from '../../common/prisma.service';
     JwtStrategy,
     RedisService,
     DeviceSessionService,
+    RolesGuard,
     PrismaService,
   ],
-  exports: [AuthService, JwtStrategy, PassportModule, DeviceSessionService],
+  exports: [
+    AuthService,
+    JwtStrategy,
+    PassportModule,
+    DeviceSessionService,
+    RolesGuard,
+    PrismaService,
+  ],
 })
 export class AuthModule {}

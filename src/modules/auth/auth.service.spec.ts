@@ -44,9 +44,7 @@ describe('AuthService', () => {
     }).compile();
 
     service = module.get<AuthService>(AuthService);
-    deviceSessionService = module.get<DeviceSessionService>(
-      DeviceSessionService,
-    );
+    deviceSessionService = module.get<DeviceSessionService>(DeviceSessionService);
   });
 
   describe('register', () => {
@@ -80,11 +78,7 @@ describe('AuthService', () => {
       (bcrypt.genSalt as jest.Mock).mockResolvedValue('salt');
       (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-password');
 
-      const result = await service.register(
-        registerDto,
-        'Mozilla/5.0',
-        '127.0.0.1',
-      );
+      const result = await service.register(registerDto, 'Mozilla/5.0', '127.0.0.1');
 
       expect(result).toEqual({
         accessToken: 'mock-jwt-token',
@@ -128,9 +122,9 @@ describe('AuthService', () => {
         lastLoginAt: null,
       });
 
-      await expect(
-        service.register(registerDto, 'Mozilla/5.0', '127.0.0.1'),
-      ).rejects.toThrow(ConflictException);
+      await expect(service.register(registerDto, 'Mozilla/5.0', '127.0.0.1')).rejects.toThrow(
+        ConflictException,
+      );
     });
   });
 
@@ -185,9 +179,9 @@ describe('AuthService', () => {
 
       prismaMock.user.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.login(loginDto, 'Mozilla/5.0', '127.0.0.1'),
-      ).rejects.toThrow(UnauthorizedException);
+      await expect(service.login(loginDto, 'Mozilla/5.0', '127.0.0.1')).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('should throw UnauthorizedException for invalid password', async () => {
@@ -210,9 +204,9 @@ describe('AuthService', () => {
       prismaMock.user.findUnique.mockResolvedValue(mockUser);
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
-      await expect(
-        service.login(loginDto, 'Mozilla/5.0', '127.0.0.1'),
-      ).rejects.toThrow(UnauthorizedException);
+      await expect(service.login(loginDto, 'Mozilla/5.0', '127.0.0.1')).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
   });
 
@@ -220,13 +214,8 @@ describe('AuthService', () => {
     it('should logout successfully', async () => {
       await service.logout('1', 'device-id', 'access-token');
 
-      expect(deviceSessionService.removeDevice).toHaveBeenCalledWith(
-        '1',
-        'device-id',
-      );
-      expect(deviceSessionService.blacklistToken).toHaveBeenCalledWith(
-        'access-token',
-      );
+      expect(deviceSessionService.removeDevice).toHaveBeenCalledWith('1', 'device-id');
+      expect(deviceSessionService.blacklistToken).toHaveBeenCalledWith('access-token');
     });
   });
 
