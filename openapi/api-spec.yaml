@@ -218,7 +218,49 @@ components:
           type: string
         message:
           type: string
+    HealthCheckResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+            - ok
+          example: ok
+        timestamp:
+          type: string
+          format: date-time
+          description: ISO 8601 형식의 현재 시각
+          example: "2025-10-27T12:34:56.789Z"
 paths:
+  /health:
+    get:
+      tags:
+        - System
+      summary: Health Check
+      description: 서비스 상태를 확인합니다. 인증 불필요.
+      responses:
+        "200":
+          description: 서비스 정상 작동
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthCheckResponse"
+        "503":
+          description: 서비스 이용 불가
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  message:
+                    type: string
+                    example: Service unavailable
   /auth/login:
     post:
       tags:
