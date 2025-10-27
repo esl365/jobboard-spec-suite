@@ -17,9 +17,9 @@
 
 import { writeFile, mkdir } from 'fs/promises';
 
-// Use Gemini 1.5 Flash via v1 API (stable)
-// v1 API is more stable than v1beta
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent';
+// Use Gemini 1.5 Flash Latest via v1 API
+// -latest suffix is required for stable v1 API
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent';
 
 /**
  * Gemini API 호출
