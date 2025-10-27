@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
 import { useAuthStore } from '@/store/auth-store';
 import Link from 'next/link';
+import Head from 'next/head';
 import BookmarkButton from '@/components/BookmarkButton';
 import ShareButton from '@/components/ShareButton';
 
@@ -19,11 +20,15 @@ interface Job {
   status: string;
   createdAt: string;
   expiresAt: string;
+  location?: string;
+  remote?: boolean;
+  skills?: string[];
   company?: {
     id: number;
     email: string;
     companyProfile?: {
       companyName: string;
+      logoUrl?: string;
     };
   };
 }
@@ -43,6 +48,59 @@ export default function JobDetailPage() {
   useEffect(() => {
     loadJob();
   }, [jobId]);
+
+  // Update meta tags for SEO
+  useEffect(() => {
+    if (!job) return;
+
+    const companyName = job.company?.companyProfile?.companyName || job.company?.email || 'Unknown Company';
+    const title = `${job.title} at ${companyName} | Job Board`;
+    const description = job.description.slice(0, 155) + (job.description.length > 155 ? '...' : '');
+    const url = typeof window !== 'undefined' ? window.location.href : '';
+    const imageUrl = job.company?.companyProfile?.logoUrl || '';
+
+    // Update title
+    document.title = title;
+
+    // Update or create meta tags
+    const updateMetaTag = (name: string, content: string, property = false) => {
+      const attribute = property ? 'property' : 'name';
+      let element = document.querySelector(`meta[${attribute}="${name}"]`) as HTMLMetaElement;
+
+      if (!element) {
+        element = document.createElement('meta');
+        element.setAttribute(attribute, name);
+        document.head.appendChild(element);
+      }
+
+      element.content = content;
+    };
+
+    // Basic meta tags
+    updateMetaTag('description', description);
+
+    // Open Graph tags
+    updateMetaTag('og:title', title, true);
+    updateMetaTag('og:description', description, true);
+    updateMetaTag('og:type', 'website', true);
+    updateMetaTag('og:url', url, true);
+    if (imageUrl) {
+      updateMetaTag('og:image', imageUrl, true);
+    }
+
+    // Twitter Card tags
+    updateMetaTag('twitter:card', 'summary');
+    updateMetaTag('twitter:title', title);
+    updateMetaTag('twitter:description', description);
+    if (imageUrl) {
+      updateMetaTag('twitter:image', imageUrl);
+    }
+
+    // Cleanup function to reset title on unmount
+    return () => {
+      document.title = 'Job Board';
+    };
+  }, [job]);
 
   const loadJob = async () => {
     try {
@@ -91,8 +149,68 @@ export default function JobDetailPage() {
   const canApply = isAuthenticated && user?.userType === 'PERSONAL' && !isOwner;
   const isExpired = new Date(job.expiresAt) < new Date();
 
+  // Generate JobPosting Schema.org structured data
+  const generateJobPostingSchema = () => {
+    const companyName = job.company?.companyProfile?.companyName || job.company?.email || 'Unknown Company';
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+
+    const schema = {
+      '@context': 'https://schema.org',
+      '@type': 'JobPosting',
+      title: job.title,
+      description: job.description,
+      datePosted: job.createdAt,
+      validThrough: job.expiresAt,
+      employmentType: job.employmentType || 'FULL_TIME',
+      hiringOrganization: {
+        '@type': 'Organization',
+        name: companyName,
+        ...(job.company?.companyProfile?.logoUrl && {
+          logo: job.company.companyProfile.logoUrl.startsWith('http')
+            ? job.company.companyProfile.logoUrl
+            : `${baseUrl}${job.company.companyProfile.logoUrl}`
+        })
+      },
+      jobLocation: job.location ? {
+        '@type': 'Place',
+        address: {
+          '@type': 'PostalAddress',
+          addressLocality: job.location
+        }
+      } : undefined,
+      ...(job.salaryMin && job.salaryMax && {
+        baseSalary: {
+          '@type': 'MonetaryAmount',
+          currency: 'KRW',
+          value: {
+            '@type': 'QuantitativeValue',
+            minValue: job.salaryMin,
+            maxValue: job.salaryMax,
+            unitText: job.salaryType || 'YEAR'
+          }
+        }
+      }),
+      ...(job.skills && job.skills.length > 0 && {
+        skills: job.skills.join(', ')
+      }),
+      ...(job.remote && {
+        jobLocationType: 'TELECOMMUTE'
+      })
+    };
+
+    return schema;
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
+      {/* SEO: JobPosting Schema.org structured data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(generateJobPostingSchema())
+        }}
+      />
+
       <div className="max-w-4xl mx-auto px-4">
         {/* Back Link */}
         <div className="mb-6">
@@ -129,32 +247,83 @@ export default function JobDetailPage() {
             </div>
 
             {/* Meta Info */}
-            <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-              {job.employmentType && (
-                <div className="flex items-center gap-1">
-                  <span className="font-medium">Type:</span>
-                  <span>{job.employmentType}</span>
+            <div className="space-y-3">
+              <div className="flex flex-wrap gap-4 text-sm">
+                {job.employmentType && (
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    <span className="text-gray-700 font-medium">{job.employmentType}</span>
+                  </div>
+                )}
+
+                {job.location && (
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span className="text-gray-700">{job.location}</span>
+                  </div>
+                )}
+
+                {job.remote && (
+                  <div className="flex items-center gap-2 px-3 py-1 bg-green-50 text-green-700 rounded-full">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                    <span className="font-medium">Remote OK</span>
+                  </div>
+                )}
+              </div>
+
+              {job.salaryMin && job.salaryMax && (
+                <div className="flex items-center gap-2 text-lg">
+                  <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="font-semibold text-gray-900">
+                    ₩{job.salaryMin.toLocaleString()} - ₩{job.salaryMax.toLocaleString()}
+                  </span>
+                  {job.salaryType && (
+                    <span className="text-sm text-gray-500">/ {job.salaryType}</span>
+                  )}
                 </div>
               )}
-              {job.salaryMin && job.salaryMax && (
-                <div className="flex items-center gap-1">
-                  <span className="font-medium">Salary:</span>
-                  <span>
-                    ₩{job.salaryMin.toLocaleString()} - ₩{job.salaryMax.toLocaleString()}
-                    {job.salaryType && ` (${job.salaryType})`}
+
+              <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <span>Posted {new Date(job.createdAt).toLocaleDateString()}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className={isExpired ? 'text-red-600 font-medium' : ''}>
+                    Deadline: {new Date(job.expiresAt).toLocaleDateString()}
                   </span>
                 </div>
+              </div>
+
+              {/* Skills */}
+              {job.skills && job.skills.length > 0 && (
+                <div className="pt-2">
+                  <div className="flex flex-wrap gap-2">
+                    {job.skills.map((skill, index) => (
+                      <span
+                        key={index}
+                        className="px-3 py-1 bg-blue-50 text-blue-700 text-sm font-medium rounded-full"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               )}
-              <div className="flex items-center gap-1">
-                <span className="font-medium">Posted:</span>
-                <span>{new Date(job.createdAt).toLocaleDateString()}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="font-medium">Deadline:</span>
-                <span className={isExpired ? 'text-red-600' : ''}>
-                  {new Date(job.expiresAt).toLocaleDateString()}
-                </span>
-              </div>
             </div>
           </div>
 

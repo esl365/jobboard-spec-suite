@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsOptional, IsInt, Min, Max, IsEnum, IsString, IsNumber } from 'class-validator';
+import { IsOptional, IsInt, Min, Max, IsEnum, IsString, IsNumber, IsBoolean } from 'class-validator';
 
 export class JobListQueryDto {
   @ApiPropertyOptional({ example: 1, minimum: 1, default: 1 })
@@ -57,6 +57,17 @@ export class JobListQueryDto {
   @IsOptional()
   @IsString()
   search?: string;
+
+  @ApiPropertyOptional({ example: 'Seoul, South Korea', description: 'Filter by location' })
+  @IsOptional()
+  @IsString()
+  location?: string;
+
+  @ApiPropertyOptional({ example: true, description: 'Filter for remote jobs' })
+  @IsOptional()
+  @Type(() => Boolean)
+  @IsBoolean()
+  remote?: boolean;
 
   @ApiPropertyOptional({ example: 30000, description: 'Minimum salary' })
   @IsOptional()
