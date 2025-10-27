@@ -21,11 +21,11 @@ import { BookmarkModule } from './modules/bookmark/bookmark.module';
       envFilePath: '.env',
     }),
 
-    // Rate limiting
+    // Rate limiting (relaxed for development)
     ThrottlerModule.forRoot([
       {
         ttl: 60000, // 60 seconds
-        limit: 10, // 10 requests per minute (default)
+        limit: 100, // 100 requests per minute (increased for development)
       },
     ]),
 

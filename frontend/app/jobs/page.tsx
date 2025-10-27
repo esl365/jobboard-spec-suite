@@ -61,7 +61,7 @@ export default function JobsPage() {
       if (filters.employmentType) params.employmentType = filters.employmentType;
 
       const data = await apiClient.getJobs(params);
-      setJobs(data.jobs || []);
+      setJobs(data.data || []);
     } catch (err: any) {
       setError('Failed to load jobs');
       console.error('Failed to load jobs:', err);
