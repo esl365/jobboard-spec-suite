@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './modules/auth/auth.module';
 import { JobModule } from './modules/job/job.module';
+import { ApplicationModule } from './modules/application/application.module';
 
 @Module({
   imports: [
@@ -16,7 +17,7 @@ import { JobModule } from './modules/job/job.module';
     // Feature modules
     AuthModule,
     JobModule,
-    // ApplicationsModule,
+    ApplicationModule,
     // PaymentsModule,
     // UsersModule,
   ],
