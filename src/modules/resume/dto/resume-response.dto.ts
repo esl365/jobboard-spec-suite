@@ -46,6 +46,11 @@ export class ResumeResponseDto {
   })
   skills?: any;
 
+  @ApiPropertyOptional({
+    example: 'uploads/resumes/resume-1-my-resume-1234567890-abc123.pdf',
+  })
+  filePath?: string;
+
   @ApiProperty({ example: false })
   isDefault: boolean;
 

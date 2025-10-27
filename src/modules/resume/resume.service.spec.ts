@@ -6,14 +6,17 @@ import {
 } from '@nestjs/common';
 import { ResumeService } from './resume.service';
 import { PrismaService } from '../../common/prisma.service';
+import { FileStorageService } from '../../common/storage/file-storage.service';
 import { mockDeep, DeepMockProxy } from 'jest-mock-extended';
 
 describe('ResumeService', () => {
   let service: ResumeService;
   let prismaMock: DeepMockProxy<PrismaService>;
+  let fileStorageMock: DeepMockProxy<FileStorageService>;
 
   beforeEach(async () => {
     prismaMock = mockDeep<PrismaService>();
+    fileStorageMock = mockDeep<FileStorageService>();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -21,6 +24,10 @@ describe('ResumeService', () => {
         {
           provide: PrismaService,
           useValue: prismaMock,
+        },
+        {
+          provide: FileStorageService,
+          useValue: fileStorageMock,
         },
       ],
     }).compile();
@@ -61,6 +68,7 @@ describe('ResumeService', () => {
         educationHistory: createResumeDto.educationHistory,
         workExperience: createResumeDto.workExperience,
         skills: createResumeDto.skills,
+        filePath: null,
         isDefault: false,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -90,6 +98,7 @@ describe('ResumeService', () => {
         educationHistory: [],
         workExperience: [],
         skills: [],
+        filePath: null,
         isDefault: true,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -123,6 +132,7 @@ describe('ResumeService', () => {
           educationHistory: [],
           workExperience: [],
           skills: [],
+          filePath: null,
           isDefault: true,
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -150,6 +160,7 @@ describe('ResumeService', () => {
         educationHistory: [],
         workExperience: [],
         skills: [],
+        filePath: null,
         isDefault: false,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -176,6 +187,7 @@ describe('ResumeService', () => {
         id: BigInt(1),
         jobseekerUserId: BigInt(2), // Different user
         title: 'Resume',
+        filePath: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -203,6 +215,7 @@ describe('ResumeService', () => {
         educationHistory: [],
         workExperience: [],
         skills: [],
+        filePath: null,
         isDefault: false,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -229,6 +242,7 @@ describe('ResumeService', () => {
         id: BigInt(1),
         jobseekerUserId: BigInt(2), // Different user
         title: 'Resume',
+        filePath: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -247,6 +261,7 @@ describe('ResumeService', () => {
         id: BigInt(1),
         jobseekerUserId: BigInt(1),
         title: 'Resume',
+        filePath: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -267,6 +282,7 @@ describe('ResumeService', () => {
         id: BigInt(1),
         jobseekerUserId: BigInt(1),
         title: 'Resume',
+        filePath: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -290,6 +306,7 @@ describe('ResumeService', () => {
         educationHistory: [],
         workExperience: [],
         skills: [],
+        filePath: null,
         isDefault: false,
         createdAt: new Date(),
         updatedAt: new Date(),

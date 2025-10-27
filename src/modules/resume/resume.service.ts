@@ -6,6 +6,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
+import { FileStorageService, UploadedFile } from '../../common/storage/file-storage.service';
 import { CreateResumeDto } from './dto/create-resume.dto';
 import { UpdateResumeDto } from './dto/update-resume.dto';
 import {
@@ -18,7 +19,10 @@ import { ResumeQueryDto } from './dto/resume-query.dto';
 export class ResumeService {
   private readonly logger = new Logger(ResumeService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly fileStorageService: FileStorageService,
+  ) {}
 
   async create(
     createResumeDto: CreateResumeDto,
@@ -295,6 +299,134 @@ export class ResumeService {
     return this.mapToResponseDto(updatedResume);
   }
 
+  async uploadPDF(
+    id: number,
+    file: UploadedFile,
+    userId: number,
+    userRoles: string[],
+  ): Promise<ResumeResponseDto> {
+    const resume = await this.prisma.resume.findUnique({
+      where: { id: BigInt(id) },
+    });
+
+    if (!resume) {
+      throw new NotFoundException('Resume not found');
+    }
+
+    // RBAC: Only owner can upload
+    const isAdmin = userRoles.includes('admin');
+    const isOwner = Number(resume.jobseekerUserId) === userId;
+
+    if (!isAdmin && !isOwner) {
+      throw new ForbiddenException(
+        'You can only upload files to your own resumes',
+      );
+    }
+
+    // Delete old file if exists
+    if (resume.filePath) {
+      await this.fileStorageService.deleteFile(resume.filePath);
+    }
+
+    // Upload new file
+    const filePath = await this.fileStorageService.uploadResumePDF(file, id);
+
+    // Update resume with file path
+    const updatedResume = await this.prisma.resume.update({
+      where: { id: BigInt(id) },
+      data: { filePath },
+    });
+
+    this.logger.log(`PDF uploaded for resume: id=${id}, path=${filePath}`);
+
+    return this.mapToResponseDto(updatedResume);
+  }
+
+  async downloadPDF(
+    id: number,
+    userId: number,
+    userRoles: string[],
+  ): Promise<{ buffer: Buffer; filename: string }> {
+    const resume = await this.prisma.resume.findUnique({
+      where: { id: BigInt(id) },
+    });
+
+    if (!resume) {
+      throw new NotFoundException('Resume not found');
+    }
+
+    if (!resume.filePath) {
+      throw new NotFoundException('Resume has no attached PDF');
+    }
+
+    // RBAC: Check permissions
+    const isAdmin = userRoles.includes('admin');
+    const isOwner = Number(resume.jobseekerUserId) === userId;
+    const isRecruiter = userRoles.includes('recruiter');
+
+    if (!isAdmin && !isOwner && !isRecruiter) {
+      throw new ForbiddenException(
+        'You do not have permission to download this resume',
+      );
+    }
+
+    // If recruiter, verify they have access through an application
+    if (isRecruiter && !isOwner && !isAdmin) {
+      const hasAccess = await this.verifyRecruiterAccess(id, userId);
+      if (!hasAccess) {
+        throw new ForbiddenException(
+          'You can only download resumes from applications to your jobs',
+        );
+      }
+    }
+
+    const buffer = await this.fileStorageService.getFile(resume.filePath);
+    const filename = `resume-${id}.pdf`;
+
+    return { buffer, filename };
+  }
+
+  async deletePDF(
+    id: number,
+    userId: number,
+    userRoles: string[],
+  ): Promise<ResumeResponseDto> {
+    const resume = await this.prisma.resume.findUnique({
+      where: { id: BigInt(id) },
+    });
+
+    if (!resume) {
+      throw new NotFoundException('Resume not found');
+    }
+
+    // RBAC: Only owner can delete
+    const isAdmin = userRoles.includes('admin');
+    const isOwner = Number(resume.jobseekerUserId) === userId;
+
+    if (!isAdmin && !isOwner) {
+      throw new ForbiddenException(
+        'You can only delete files from your own resumes',
+      );
+    }
+
+    if (!resume.filePath) {
+      throw new BadRequestException('Resume has no attached PDF');
+    }
+
+    // Delete file
+    await this.fileStorageService.deleteFile(resume.filePath);
+
+    // Update resume to remove file path
+    const updatedResume = await this.prisma.resume.update({
+      where: { id: BigInt(id) },
+      data: { filePath: null },
+    });
+
+    this.logger.log(`PDF deleted from resume: id=${id}`);
+
+    return this.mapToResponseDto(updatedResume);
+  }
+
   private async verifyRecruiterAccess(
     resumeId: number,
     recruiterId: number,
@@ -320,6 +452,7 @@ export class ResumeService {
       educationHistory: resume.educationHistory,
       workExperience: resume.workExperience,
       skills: resume.skills,
+      filePath: resume.filePath,
       isDefault: resume.isDefault,
       createdAt: resume.createdAt.toISOString(),
       updatedAt: resume.updatedAt.toISOString(),
