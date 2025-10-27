@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './modules/auth/auth.module';
 import { JobModule } from './modules/job/job.module';
 import { ApplicationModule } from './modules/application/application.module';
+import { PaymentModule } from './modules/payment/payment.module';
 
 @Module({
   imports: [
@@ -18,7 +19,7 @@ import { ApplicationModule } from './modules/application/application.module';
     AuthModule,
     JobModule,
     ApplicationModule,
-    // PaymentsModule,
+    PaymentModule,
     // UsersModule,
   ],
   controllers: [AppController],

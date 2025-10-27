@@ -34,6 +34,8 @@ model User {
   resumes         Resume[]
   applications    JobApplication[]
   applicationStages JobApplicationStage[]
+  orders          Order[]
+  pointTransactions PointTransaction[]
 
   @@map("users")
 }
@@ -246,7 +248,7 @@ enum ApplicationStatus {
 }
 
 // =================================================================
-// Section 3: Payment & Products (Minimal for Week 1)
+// Section 3: Payment & Products
 // =================================================================
 
 model ProductPackage {
@@ -256,5 +258,48 @@ model ProductPackage {
   benefits    Json
   isActive    Boolean @default(true) @map("is_active")
 
+  orders Order[]
+
   @@map("product_packages")
+}
+
+model Order {
+  id               BigInt       @id @default(autoincrement()) @map("order_id") @db.UnsignedBigInt
+  userId           BigInt       @map("user_id") @db.UnsignedBigInt
+  packageId        Int?         @map("package_id") @db.UnsignedInt
+  totalAmount      Decimal      @map("total_amount") @db.Decimal(15, 2)
+  paymentMethod    String?      @map("payment_method") @db.VarChar(50)
+  pgTransactionId  String?      @unique @map("pg_transaction_id") @db.VarChar(255)
+  status           OrderStatus  @default(PENDING)
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+
+  user             User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  package          ProductPackage?     @relation(fields: [packageId], references: [id])
+  pointTransactions PointTransaction[]
+
+  @@map("orders")
+}
+
+enum OrderStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+model PointTransaction {
+  id               BigInt   @id @default(autoincrement()) @map("transaction_id") @db.UnsignedBigInt
+  userId           BigInt   @map("user_id") @db.UnsignedBigInt
+  amount           BigInt   @map("amount")
+  reasonType       String   @map("reason_type") @db.VarChar(50)
+  relatedOrderId   BigInt?  @map("related_order_id") @db.UnsignedBigInt
+  description      String?  @db.VarChar(255)
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order Order? @relation(fields: [relatedOrderId], references: [id])
+
+  @@index([userId, createdAt], name: "idx_user_id_created_at")
+  @@map("point_transactions")
 }
