@@ -13,10 +13,9 @@ export class PaymentProviderFactory {
     private tossProvider: TossPaymentsProvider,
     private stripeProvider: StripeProvider,
   ) {
-    this.providers = new Map([
-      ['toss', tossProvider],
-      ['stripe', stripeProvider],
-    ]);
+    this.providers = new Map<PaymentProviderType, IPaymentProvider>();
+    this.providers.set('toss', tossProvider);
+    this.providers.set('stripe', stripeProvider);
   }
 
   getProvider(type: PaymentProviderType): IPaymentProvider {

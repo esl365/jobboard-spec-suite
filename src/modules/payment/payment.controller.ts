@@ -10,12 +10,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiBearerAuth,
-  ApiResponse,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { PaymentService } from './payment.service';
 import { PaymentProviderType } from './payment-provider.factory';
 import { InitiatePaymentDto } from './dto/initiate-payment.dto';
@@ -41,8 +36,7 @@ export class PaymentController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Initiate a payment order',
-    description:
-      'Create a pending payment order and get checkout URL for Toss Payments',
+    description: 'Create a pending payment order and get checkout URL for Toss Payments',
   })
   @ApiResponse({
     status: 201,
@@ -57,11 +51,7 @@ export class PaymentController {
     @Req() req: any,
     @Query('provider') provider: PaymentProviderType = 'toss',
   ): Promise<PaymentInitiateResponseDto> {
-    return this.paymentService.initiatePayment(
-      initiateDto,
-      req.user.id,
-      provider,
-    );
+    return this.paymentService.initiatePayment(initiateDto, req.user.id, provider);
   }
 
   @Post('confirm')
@@ -70,15 +60,17 @@ export class PaymentController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Confirm a payment',
-    description:
-      'Confirm payment with Toss Payments and update order status, credit wallet',
+    description: 'Confirm payment with Toss Payments and update order status, credit wallet',
   })
   @ApiResponse({
     status: 200,
     description: 'Payment confirmed successfully',
     type: OrderResponseDto,
   })
-  @ApiResponse({ status: 400, description: 'Bad request (amount mismatch, already processed, etc.)' })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad request (amount mismatch, already processed, etc.)',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden (not order owner)' })
   @ApiResponse({ status: 404, description: 'Order not found' })
@@ -103,10 +95,7 @@ export class PaymentController {
     type: OrderListResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getOrders(
-    @Query() query: PaymentQueryDto,
-    @Req() req: any,
-  ): Promise<OrderListResponseDto> {
+  async getOrders(@Query() query: PaymentQueryDto, @Req() req: any): Promise<OrderListResponseDto> {
     return this.paymentService.getOrders(req.user.id, query, req.user.roles);
   }
 
@@ -126,10 +115,7 @@ export class PaymentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Order not found' })
-  async getOrderById(
-    @Param('id') id: string,
-    @Req() req: any,
-  ): Promise<OrderResponseDto> {
+  async getOrderById(@Param('id') id: string, @Req() req: any): Promise<OrderResponseDto> {
     return this.paymentService.getOrderById(+id, req.user.id, req.user.roles);
   }
 
@@ -151,11 +137,7 @@ export class PaymentController {
     @Query() query: PaymentQueryDto,
     @Req() req: any,
   ): Promise<PointTransactionListResponseDto> {
-    return this.paymentService.getPointTransactions(
-      req.user.id,
-      query,
-      req.user.roles,
-    );
+    return this.paymentService.getPointTransactions(req.user.id, query, req.user.roles);
   }
 
   @Get('wallet')

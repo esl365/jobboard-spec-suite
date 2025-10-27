@@ -94,9 +94,7 @@ export class TossPaymentsService {
       }
 
       const data: TossPaymentConfirmResponse = await response.json();
-      this.logger.log(
-        `Payment confirmed successfully: ${confirmRequest.orderId}`,
-      );
+      this.logger.log(`Payment confirmed successfully: ${confirmRequest.orderId}`);
 
       return data;
     } catch (error) {
@@ -124,9 +122,7 @@ export class TossPaymentsService {
       if (!response.ok) {
         const errorData = await response.json();
         this.logger.error('Failed to get payment details', errorData);
-        throw new Error(
-          `Failed to get payment: ${errorData.message || response.statusText}`,
-        );
+        throw new Error(`Failed to get payment: ${errorData.message || response.statusText}`);
       }
 
       return await response.json();
@@ -168,9 +164,7 @@ export class TossPaymentsService {
       if (!response.ok) {
         const errorData = await response.json();
         this.logger.error('Payment cancellation failed', errorData);
-        throw new Error(
-          `Payment cancellation failed: ${errorData.message || response.statusText}`,
-        );
+        throw new Error(`Payment cancellation failed: ${errorData.message || response.statusText}`);
       }
 
       const data = await response.json();

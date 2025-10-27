@@ -21,10 +21,7 @@ export class FileStorageService {
   private readonly allowedMimeTypes: string[] = ['application/pdf'];
 
   constructor(private readonly configService: ConfigService) {
-    this.uploadDir = this.configService.get<string>(
-      'UPLOAD_DIR',
-      './uploads/resumes',
-    );
+    this.uploadDir = this.configService.get<string>('UPLOAD_DIR', './uploads/resumes');
     this.ensureUploadDirectory();
   }
 
@@ -52,9 +49,7 @@ export class FileStorageService {
     }
 
     if (!this.allowedMimeTypes.includes(file.mimetype)) {
-      throw new BadRequestException(
-        `Invalid file type. Only PDF files are allowed`,
-      );
+      throw new BadRequestException(`Invalid file type. Only PDF files are allowed`);
     }
   }
 
@@ -77,10 +72,7 @@ export class FileStorageService {
   /**
    * Save file to local storage
    */
-  async saveFile(
-    file: UploadedFile,
-    filename: string,
-  ): Promise<string> {
+  async saveFile(file: UploadedFile, filename: string): Promise<string> {
     const filePath = path.join(this.uploadDir, filename);
 
     try {
@@ -96,16 +88,10 @@ export class FileStorageService {
   /**
    * Upload resume PDF
    */
-  async uploadResumePDF(
-    file: UploadedFile,
-    resumeId: number,
-  ): Promise<string> {
+  async uploadResumePDF(file: UploadedFile, resumeId: number): Promise<string> {
     this.validateFile(file);
 
-    const filename = this.generateFilename(
-      file.originalname,
-      `resume-${resumeId}`,
-    );
+    const filename = this.generateFilename(file.originalname, `resume-${resumeId}`);
     const filePath = await this.saveFile(file, filename);
 
     return filePath;
@@ -116,9 +102,7 @@ export class FileStorageService {
    */
   async getFile(filePath: string): Promise<Buffer> {
     try {
-      const fullPath = path.isAbsolute(filePath)
-        ? filePath
-        : path.join(process.cwd(), filePath);
+      const fullPath = path.isAbsolute(filePath) ? filePath : path.join(process.cwd(), filePath);
 
       const file = await fs.readFile(fullPath);
       return file;
@@ -137,9 +121,7 @@ export class FileStorageService {
     }
 
     try {
-      const fullPath = path.isAbsolute(filePath)
-        ? filePath
-        : path.join(process.cwd(), filePath);
+      const fullPath = path.isAbsolute(filePath) ? filePath : path.join(process.cwd(), filePath);
 
       await fs.unlink(fullPath);
       this.logger.log(`File deleted: ${fullPath}`);
@@ -154,9 +136,7 @@ export class FileStorageService {
    */
   async fileExists(filePath: string): Promise<boolean> {
     try {
-      const fullPath = path.isAbsolute(filePath)
-        ? filePath
-        : path.join(process.cwd(), filePath);
+      const fullPath = path.isAbsolute(filePath) ? filePath : path.join(process.cwd(), filePath);
 
       await fs.access(fullPath);
       return true;
@@ -174,9 +154,7 @@ export class FileStorageService {
     modifiedAt: Date;
   } | null> {
     try {
-      const fullPath = path.isAbsolute(filePath)
-        ? filePath
-        : path.join(process.cwd(), filePath);
+      const fullPath = path.isAbsolute(filePath) ? filePath : path.join(process.cwd(), filePath);
 
       const stats = await fs.stat(fullPath);
       return {

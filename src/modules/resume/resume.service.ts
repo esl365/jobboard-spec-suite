@@ -9,10 +9,7 @@ import { PrismaService } from '../../common/prisma.service';
 import { FileStorageService, UploadedFile } from '../../common/storage/file-storage.service';
 import { CreateResumeDto } from './dto/create-resume.dto';
 import { UpdateResumeDto } from './dto/update-resume.dto';
-import {
-  ResumeResponseDto,
-  ResumeListResponseDto,
-} from './dto/resume-response.dto';
+import { ResumeResponseDto, ResumeListResponseDto } from './dto/resume-response.dto';
 import { ResumeQueryDto } from './dto/resume-query.dto';
 
 @Injectable()
@@ -24,10 +21,7 @@ export class ResumeService {
     private readonly fileStorageService: FileStorageService,
   ) {}
 
-  async create(
-    createResumeDto: CreateResumeDto,
-    userId: number,
-  ): Promise<ResumeResponseDto> {
+  async create(createResumeDto: CreateResumeDto, userId: number): Promise<ResumeResponseDto> {
     // If setting as default, unset other defaults first
     if (createResumeDto.isDefault) {
       await this.prisma.resume.updateMany({
@@ -63,12 +57,7 @@ export class ResumeService {
     query: ResumeQueryDto,
     userRoles: string[],
   ): Promise<ResumeListResponseDto> {
-    const {
-      page = 1,
-      limit = 20,
-      sortBy = 'createdAt',
-      sortOrder = 'desc',
-    } = query;
+    const { page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc' } = query;
 
     const skip = (page - 1) * limit;
     const take = limit;
@@ -104,11 +93,7 @@ export class ResumeService {
     };
   }
 
-  async findOne(
-    id: number,
-    userId: number,
-    userRoles: string[],
-  ): Promise<ResumeResponseDto> {
+  async findOne(id: number, userId: number, userRoles: string[]): Promise<ResumeResponseDto> {
     const resume = await this.prisma.resume.findUnique({
       where: { id: BigInt(id) },
     });
@@ -125,18 +110,14 @@ export class ResumeService {
     // Recruiters can view resumes through job applications (checked in applications)
     // For now, only owner or admin can view directly
     if (!isAdmin && !isOwner && !isRecruiter) {
-      throw new ForbiddenException(
-        'You do not have permission to view this resume',
-      );
+      throw new ForbiddenException('You do not have permission to view this resume');
     }
 
     // If recruiter, verify they have access through an application
     if (isRecruiter && !isOwner && !isAdmin) {
       const hasAccess = await this.verifyRecruiterAccess(id, userId);
       if (!hasAccess) {
-        throw new ForbiddenException(
-          'You can only view resumes from applications to your jobs',
-        );
+        throw new ForbiddenException('You can only view resumes from applications to your jobs');
       }
     }
 
@@ -162,9 +143,7 @@ export class ResumeService {
     const isOwner = Number(existingResume.jobseekerUserId) === userId;
 
     if (!isAdmin && !isOwner) {
-      throw new ForbiddenException(
-        'You can only update your own resumes',
-      );
+      throw new ForbiddenException('You can only update your own resumes');
     }
 
     // If setting as default, unset other defaults first
@@ -208,11 +187,7 @@ export class ResumeService {
     return this.mapToResponseDto(updatedResume);
   }
 
-  async remove(
-    id: number,
-    userId: number,
-    userRoles: string[],
-  ): Promise<void> {
+  async remove(id: number, userId: number, userRoles: string[]): Promise<void> {
     const existingResume = await this.prisma.resume.findUnique({
       where: { id: BigInt(id) },
     });
@@ -226,9 +201,7 @@ export class ResumeService {
     const isOwner = Number(existingResume.jobseekerUserId) === userId;
 
     if (!isAdmin && !isOwner) {
-      throw new ForbiddenException(
-        'You can only delete your own resumes',
-      );
+      throw new ForbiddenException('You can only delete your own resumes');
     }
 
     // Check if resume is being used in active applications
@@ -240,9 +213,7 @@ export class ResumeService {
     });
 
     if (activeApplications > 0) {
-      throw new BadRequestException(
-        'Cannot delete resume that is used in active applications',
-      );
+      throw new BadRequestException('Cannot delete resume that is used in active applications');
     }
 
     await this.prisma.resume.delete({
@@ -252,11 +223,7 @@ export class ResumeService {
     this.logger.log(`Resume deleted: id=${id}, userId=${userId}`);
   }
 
-  async setDefault(
-    id: number,
-    userId: number,
-    userRoles: string[],
-  ): Promise<ResumeResponseDto> {
+  async setDefault(id: number, userId: number, userRoles: string[]): Promise<ResumeResponseDto> {
     const resume = await this.prisma.resume.findUnique({
       where: { id: BigInt(id) },
     });
@@ -270,9 +237,7 @@ export class ResumeService {
     const isOwner = Number(resume.jobseekerUserId) === userId;
 
     if (!isAdmin && !isOwner) {
-      throw new ForbiddenException(
-        'You can only set default for your own resumes',
-      );
+      throw new ForbiddenException('You can only set default for your own resumes');
     }
 
     // Unset all other defaults for this user
@@ -318,9 +283,7 @@ export class ResumeService {
     const isOwner = Number(resume.jobseekerUserId) === userId;
 
     if (!isAdmin && !isOwner) {
-      throw new ForbiddenException(
-        'You can only upload files to your own resumes',
-      );
+      throw new ForbiddenException('You can only upload files to your own resumes');
     }
 
     // Delete old file if exists
@@ -365,9 +328,7 @@ export class ResumeService {
     const isRecruiter = userRoles.includes('recruiter');
 
     if (!isAdmin && !isOwner && !isRecruiter) {
-      throw new ForbiddenException(
-        'You do not have permission to download this resume',
-      );
+      throw new ForbiddenException('You do not have permission to download this resume');
     }
 
     // If recruiter, verify they have access through an application
@@ -386,11 +347,7 @@ export class ResumeService {
     return { buffer, filename };
   }
 
-  async deletePDF(
-    id: number,
-    userId: number,
-    userRoles: string[],
-  ): Promise<ResumeResponseDto> {
+  async deletePDF(id: number, userId: number, userRoles: string[]): Promise<ResumeResponseDto> {
     const resume = await this.prisma.resume.findUnique({
       where: { id: BigInt(id) },
     });
@@ -404,9 +361,7 @@ export class ResumeService {
     const isOwner = Number(resume.jobseekerUserId) === userId;
 
     if (!isAdmin && !isOwner) {
-      throw new ForbiddenException(
-        'You can only delete files from your own resumes',
-      );
+      throw new ForbiddenException('You can only delete files from your own resumes');
     }
 
     if (!resume.filePath) {
@@ -427,10 +382,7 @@ export class ResumeService {
     return this.mapToResponseDto(updatedResume);
   }
 
-  private async verifyRecruiterAccess(
-    resumeId: number,
-    recruiterId: number,
-  ): Promise<boolean> {
+  private async verifyRecruiterAccess(resumeId: number, recruiterId: number): Promise<boolean> {
     const application = await this.prisma.jobApplication.findFirst({
       where: {
         resumeId: BigInt(resumeId),

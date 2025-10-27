@@ -87,7 +87,11 @@ export class SearchService {
     });
   }
 
-  async trackSearchHistory(userId: number, searchCriteria: any, resultsCount: number): Promise<void> {
+  async trackSearchHistory(
+    userId: number,
+    searchCriteria: any,
+    resultsCount: number,
+  ): Promise<void> {
     await this.prisma.searchHistory.create({
       data: {
         userId: BigInt(userId),

@@ -1,22 +1,24 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-  NotFoundException,
-  BadRequestException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PaymentService } from './payment.service';
-import { TossPaymentsService } from './toss-payments.service';
+import { PaymentProviderFactory } from './payment-provider.factory';
+import { IPaymentProvider } from './interfaces/payment-provider.interface';
 import { PrismaService } from '../../common/prisma.service';
 import { mockDeep, DeepMockProxy } from 'jest-mock-extended';
 
 describe('PaymentService', () => {
   let service: PaymentService;
   let prismaMock: DeepMockProxy<PrismaService>;
-  let tossPaymentsServiceMock: DeepMockProxy<TossPaymentsService>;
+  let paymentProviderFactoryMock: DeepMockProxy<PaymentProviderFactory>;
+  let mockProvider: DeepMockProxy<IPaymentProvider>;
 
   beforeEach(async () => {
     prismaMock = mockDeep<PrismaService>();
-    tossPaymentsServiceMock = mockDeep<TossPaymentsService>();
+    paymentProviderFactoryMock = mockDeep<PaymentProviderFactory>();
+    mockProvider = mockDeep<IPaymentProvider>();
+
+    // Setup mock provider to be returned by factory
+    paymentProviderFactoryMock.getProvider.mockReturnValue(mockProvider);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -26,8 +28,8 @@ describe('PaymentService', () => {
           useValue: prismaMock,
         },
         {
-          provide: TossPaymentsService,
-          useValue: tossPaymentsServiceMock,
+          provide: PaymentProviderFactory,
+          useValue: paymentProviderFactoryMock,
         },
       ],
     }).compile();
@@ -48,11 +50,24 @@ describe('PaymentService', () => {
         packageId: null,
         totalAmount: 10000,
         status: 'PENDING',
+        provider: 'toss',
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
+      const mockUser = {
+        id: BigInt(1),
+        email: 'test@example.com',
+      };
+
       prismaMock.order.create.mockResolvedValue(mockOrder as any);
+      prismaMock.user.findUnique.mockResolvedValue(mockUser as any);
+      mockProvider.initiate.mockResolvedValue({
+        orderId: 'ORDER_1',
+        amount: 10000,
+        checkoutUrl: 'http://checkout.url',
+        provider: 'toss',
+      });
 
       const result = await service.initiatePayment(initiateDto, 1);
 
@@ -60,6 +75,7 @@ describe('PaymentService', () => {
       expect(result).toHaveProperty('amount', 10000);
       expect(result).toHaveProperty('checkoutUrl');
       expect(prismaMock.order.create).toHaveBeenCalled();
+      expect(mockProvider.initiate).toHaveBeenCalled();
     });
 
     it('should validate package if packageId provided', async () => {
@@ -71,9 +87,7 @@ describe('PaymentService', () => {
 
       prismaMock.productPackage.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.initiatePayment(initiateDto, 1),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.initiatePayment(initiateDto, 1)).rejects.toThrow(NotFoundException);
     });
 
     it('should validate amount matches package price', async () => {
@@ -93,9 +107,7 @@ describe('PaymentService', () => {
 
       prismaMock.productPackage.findUnique.mockResolvedValue(mockPackage as any);
 
-      await expect(
-        service.initiatePayment(initiateDto, 1),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.initiatePayment(initiateDto, 1)).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -112,6 +124,7 @@ describe('PaymentService', () => {
         userId: BigInt(1),
         totalAmount: 10000,
         status: 'PENDING',
+        provider: 'toss',
       };
 
       const mockUpdatedOrder = {
@@ -130,12 +143,13 @@ describe('PaymentService', () => {
         updatedAt: new Date(),
       };
 
-      const mockTossResponse = {
-        method: 'CARD',
-        paymentKey: 'test_payment_key_123',
+      const mockProviderResponse = {
         orderId: 'ORDER_1',
-        totalAmount: 10000,
-        status: 'DONE',
+        transactionId: 'test_payment_key_123',
+        status: 'COMPLETED' as const,
+        amount: 10000,
+        paidAt: new Date(),
+        raw: { method: 'CARD' },
       };
 
       prismaMock.order.findUnique.mockResolvedValue(mockOrder as any);
@@ -146,7 +160,7 @@ describe('PaymentService', () => {
         pointsBalance: BigInt(10000),
       } as any);
       prismaMock.pointTransaction.create.mockResolvedValue({} as any);
-      tossPaymentsServiceMock.confirmPayment.mockResolvedValue(mockTossResponse as any);
+      mockProvider.confirm.mockResolvedValue(mockProviderResponse);
 
       const result = await service.confirmPayment(confirmDto, 1);
 
@@ -154,6 +168,7 @@ describe('PaymentService', () => {
       expect(prismaMock.order.update).toHaveBeenCalled();
       expect(prismaMock.userWallet.update).toHaveBeenCalled();
       expect(prismaMock.pointTransaction.create).toHaveBeenCalled();
+      expect(mockProvider.confirm).toHaveBeenCalled();
     });
 
     it('should throw NotFoundException if order not found', async () => {
@@ -165,9 +180,7 @@ describe('PaymentService', () => {
 
       prismaMock.order.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.confirmPayment(confirmDto, 1),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.confirmPayment(confirmDto, 1)).rejects.toThrow(NotFoundException);
     });
 
     it('should throw ForbiddenException if user does not own order', async () => {
@@ -186,9 +199,7 @@ describe('PaymentService', () => {
 
       prismaMock.order.findUnique.mockResolvedValue(mockOrder as any);
 
-      await expect(
-        service.confirmPayment(confirmDto, 1),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.confirmPayment(confirmDto, 1)).rejects.toThrow(ForbiddenException);
     });
 
     it('should throw BadRequestException if amount mismatch', async () => {
@@ -207,9 +218,7 @@ describe('PaymentService', () => {
 
       prismaMock.order.findUnique.mockResolvedValue(mockOrder as any);
 
-      await expect(
-        service.confirmPayment(confirmDto, 1),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.confirmPayment(confirmDto, 1)).rejects.toThrow(BadRequestException);
     });
 
     it('should throw BadRequestException if order already processed', async () => {
@@ -228,9 +237,7 @@ describe('PaymentService', () => {
 
       prismaMock.order.findUnique.mockResolvedValue(mockOrder as any);
 
-      await expect(
-        service.confirmPayment(confirmDto, 1),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.confirmPayment(confirmDto, 1)).rejects.toThrow(BadRequestException);
     });
   });
 

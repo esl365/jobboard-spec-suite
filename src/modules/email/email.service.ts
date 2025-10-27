@@ -41,17 +41,22 @@ export class EmailService {
     const pass = this.configService.get<string>('EMAIL_PASS');
 
     if (!user || !pass) {
-      this.logger.warn('EMAIL_USER or EMAIL_PASS not configured. Email service will not work properly.');
+      this.logger.warn(
+        'EMAIL_USER or EMAIL_PASS not configured. Email service will not work properly.',
+      );
     }
 
     this.transporter = nodemailer.createTransport({
       host,
       port,
       secure,
-      auth: user && pass ? {
-        user,
-        pass,
-      } : undefined,
+      auth:
+        user && pass
+          ? {
+              user,
+              pass,
+            }
+          : undefined,
     });
 
     this.logger.log(`Email service initialized with host: ${host}:${port}`);
@@ -109,7 +114,8 @@ export class EmailService {
       context: {
         username,
         userType: userType === 'PERSONAL' ? '구직자' : '기업',
-        loginUrl: this.configService.get<string>('FRONTEND_URL', 'http://localhost:3000') + '/login',
+        loginUrl:
+          this.configService.get<string>('FRONTEND_URL', 'http://localhost:3000') + '/login',
         year: new Date().getFullYear(),
       },
     });
@@ -132,7 +138,8 @@ export class EmailService {
         jobTitle,
         companyName,
         status: statusText,
-        dashboardUrl: this.configService.get<string>('FRONTEND_URL', 'http://localhost:3000') + '/applications',
+        dashboardUrl:
+          this.configService.get<string>('FRONTEND_URL', 'http://localhost:3000') + '/applications',
         year: new Date().getFullYear(),
       },
     });
@@ -153,7 +160,9 @@ export class EmailService {
         orderNumber,
         amount: amount.toLocaleString('ko-KR'),
         description,
-        receiptUrl: this.configService.get<string>('FRONTEND_URL', 'http://localhost:3000') + `/orders/${orderNumber}`,
+        receiptUrl:
+          this.configService.get<string>('FRONTEND_URL', 'http://localhost:3000') +
+          `/orders/${orderNumber}`,
         year: new Date().getFullYear(),
       },
     });
@@ -172,7 +181,8 @@ export class EmailService {
       context: {
         jobTitle,
         applicantName,
-        applicationsUrl: this.configService.get<string>('FRONTEND_URL', 'http://localhost:3000') + '/applications',
+        applicationsUrl:
+          this.configService.get<string>('FRONTEND_URL', 'http://localhost:3000') + '/applications',
         year: new Date().getFullYear(),
       },
     });

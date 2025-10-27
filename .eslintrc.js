@@ -24,6 +24,7 @@ module.exports = {
     '*.config.ts',
     'scripts/**/*',
     'tests/**/*',
+    'frontend/**/*', // Frontend has its own eslint config
   ],
   rules: {
     '@typescript-eslint/interface-name-prefix': 'off',

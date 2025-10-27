@@ -73,12 +73,18 @@ export class JobModerationDto {
 }
 
 export class UpdateUserStatusDto {
-  @ApiProperty({ example: 'ACTIVE', enum: ['PENDING_VERIFICATION', 'ACTIVE', 'SUSPENDED', 'DELETED'] })
+  @ApiProperty({
+    example: 'ACTIVE',
+    enum: ['PENDING_VERIFICATION', 'ACTIVE', 'SUSPENDED', 'DELETED'],
+  })
   status: 'PENDING_VERIFICATION' | 'ACTIVE' | 'SUSPENDED' | 'DELETED';
 }
 
 export class UpdateJobStatusDto {
-  @ApiProperty({ example: 'ACTIVE', enum: ['DRAFT', 'PENDING_REVIEW', 'ACTIVE', 'EXPIRED', 'FILLED', 'DELETED'] })
+  @ApiProperty({
+    example: 'ACTIVE',
+    enum: ['DRAFT', 'PENDING_REVIEW', 'ACTIVE', 'EXPIRED', 'FILLED', 'DELETED'],
+  })
   status: 'DRAFT' | 'PENDING_REVIEW' | 'ACTIVE' | 'EXPIRED' | 'FILLED' | 'DELETED';
 }
 
@@ -89,9 +95,9 @@ export class AnalyticsDto {
   @ApiProperty({ example: { '2025-10': 65, '2025-09': 52 } })
   jobGrowth: Record<string, number>;
 
-  @ApiProperty({ example: { 'PERSONAL': 850, 'COMPANY': 400 } })
+  @ApiProperty({ example: { PERSONAL: 850, COMPANY: 400 } })
   usersByType: Record<string, number>;
 
-  @ApiProperty({ example: { 'ACTIVE': 320, 'FILLED': 180, 'EXPIRED': 95 } })
+  @ApiProperty({ example: { ACTIVE: 320, FILLED: 180, EXPIRED: 95 } })
   jobsByStatus: Record<string, number>;
 }

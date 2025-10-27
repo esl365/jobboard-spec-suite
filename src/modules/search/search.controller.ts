@@ -1,14 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Delete,
-  Body,
-  Param,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { SearchService } from './search.service';
 import {
@@ -31,7 +21,10 @@ export class SearchController {
   @Roles('jobseeker')
   @ApiOperation({ summary: 'Create a saved search' })
   @ApiResponse({ status: 201, type: SavedSearchResponseDto })
-  async create(@Body() dto: CreateSavedSearchDto, @Req() req: any): Promise<SavedSearchResponseDto> {
+  async create(
+    @Body() dto: CreateSavedSearchDto,
+    @Req() req: any,
+  ): Promise<SavedSearchResponseDto> {
     return this.searchService.createSavedSearch(req.user.id, dto);
   }
 

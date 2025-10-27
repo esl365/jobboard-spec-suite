@@ -50,7 +50,10 @@ export class AdminService {
     };
   }
 
-  async getUsers(page: number = 1, limit: number = 20): Promise<{ users: UserManagementDto[]; total: number }> {
+  async getUsers(
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<{ users: UserManagementDto[]; total: number }> {
     const skip = (page - 1) * limit;
 
     const [users, total] = await Promise.all([
@@ -109,7 +112,10 @@ export class AdminService {
     });
   }
 
-  async getPendingJobs(page: number = 1, limit: number = 20): Promise<{ jobs: JobModerationDto[]; total: number }> {
+  async getPendingJobs(
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<{ jobs: JobModerationDto[]; total: number }> {
     const skip = (page - 1) * limit;
 
     const [jobs, total] = await Promise.all([
