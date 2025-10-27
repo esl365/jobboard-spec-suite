@@ -6,12 +6,12 @@ import { BookmarkResponseDto, BookmarkToggleResponseDto } from './dto/bookmark-r
 
 @ApiTags('Bookmarks')
 @Controller('bookmarks')
-@UseGuards(JwtAuthGuard)
-@ApiBearerAuth()
 export class BookmarkController {
   constructor(private readonly bookmarkService: BookmarkService) {}
 
   @Post(':jobId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Toggle bookmark for a job (add if not exists, remove if exists)' })
   @ApiResponse({
     status: 200,
@@ -27,6 +27,8 @@ export class BookmarkController {
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all bookmarked jobs for the current user' })
   @ApiResponse({
     status: 200,
@@ -39,7 +41,7 @@ export class BookmarkController {
   }
 
   @Get('check/:jobId')
-  @ApiOperation({ summary: 'Check if a job is bookmarked by the current user' })
+  @ApiOperation({ summary: 'Check if a job is bookmarked by the current user (no authentication required)' })
   @ApiResponse({
     status: 200,
     description: 'Bookmark status',
@@ -54,6 +56,11 @@ export class BookmarkController {
     @Param('jobId', ParseIntPipe) jobId: number,
     @Req() req: any,
   ): Promise<{ bookmarked: boolean }> {
+    // If user is not authenticated, return false
+    if (!req.user || !req.user.userId) {
+      return { bookmarked: false };
+    }
+
     const userId = req.user.userId;
     const bookmarked = await this.bookmarkService.checkBookmark(userId, jobId);
     return { bookmarked };
