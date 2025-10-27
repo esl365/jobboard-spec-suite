@@ -41,8 +41,9 @@ RUN npm run build
 # ========================================
 FROM node:20-alpine AS production
 
-# Install dumb-init and OpenSSL 1.1 compatibility for Prisma
-RUN apk add --no-cache dumb-init openssl1.1-compat
+# Install dumb-init and OpenSSL for Prisma
+# Note: Alpine 3.22+ uses OpenSSL 3.x natively, no need for openssl1.1-compat
+RUN apk add --no-cache dumb-init openssl
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \
