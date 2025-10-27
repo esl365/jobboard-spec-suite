@@ -4,6 +4,9 @@ info:
   description: 레거시 '구인구직C Ver6.2'를 2025년 표준(Headless, API-First, JWT, RBAC)으로 현대화한
     API 명세서입니다.
   version: 1.0.0
+  license:
+    name: UNLICENSED
+    url: https://github.com/esl365/jobboard-spec-suite
 servers:
   - url: /api/v1
     description: 메인 API v1 서버
@@ -237,6 +240,8 @@ components:
 paths:
   /health:
     get:
+      operationId: healthCheck
+      security: []
       tags:
         - System
       summary: Health Check
@@ -263,6 +268,8 @@ paths:
                     example: Service unavailable
   /auth/login:
     post:
+      operationId: login
+      security: []
       tags:
         - Auth
       summary: 사용자 로그인 (JWT 발급)
@@ -288,6 +295,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
   /jobs:
     get:
+      operationId: listJobs
+      security: []
       tags:
         - Jobs
       summary: 채용 공고 목록 조회
@@ -322,6 +331,7 @@ paths:
                     items:
                       $ref: "#/components/schemas/JobSummary"
     post:
+      operationId: createJob
       tags:
         - Jobs
       summary: 채K용 공고 등록
@@ -347,6 +357,7 @@ paths:
           description: "권한 없음 (예: 개인회원이 시도)"
   /jobs/{jobId}/apply:
     post:
+      operationId: applyToJob
       tags:
         - Applications
       summary: 채용 공고에 지원
@@ -379,6 +390,7 @@ paths:
           description: 중복 지원 (Conflict)
   /orders/prepare:
     post:
+      operationId: prepareOrder
       tags:
         - Payments
       summary: 결제 준비
@@ -400,6 +412,8 @@ paths:
                 $ref: "#/components/schemas/OrderPrepareResponse"
   /orders/webhook:
     post:
+      operationId: handleOrderWebhook
+      security: []
       tags:
         - Payments
       summary: 결제 완료 웹훅 (PG사 호출)
@@ -417,26 +431,11 @@ paths:
           description: 잘못된 요청 또는 위변조 시도
   /payments/prepare:
     post:
+      operationId: preparePayment
       summary: Create/ensure an order (idempotent by Idempotency-Key)
+      security:
+        - jwtBearerAuth: []
       parameters:
-        - in: header
-          name: Idempotency-Key
-          required: true
-          schema:
-            type: string
-            minLength: 8
-        - in: header
-          name: Idempotency-Key
-          required: true
-          schema:
-            type: string
-            minLength: 8
-        - in: header
-          name: Idempotency-Key
-          required: true
-          schema:
-            type: string
-            minLength: 8
         - in: header
           name: Idempotency-Key
           required: true
@@ -480,23 +479,10 @@ paths:
                 $ref: "#/components/schemas/Error"
   /webhooks/payments/{provider}:
     post:
+      operationId: handlePaymentWebhook
       summary: Provider webhook (exactly-once)
+      security: []
       parameters:
-        - in: path
-          name: provider
-          required: true
-          schema:
-            type: string
-        - in: path
-          name: provider
-          required: true
-          schema:
-            type: string
-        - in: path
-          name: provider
-          required: true
-          schema:
-            type: string
         - in: path
           name: provider
           required: true

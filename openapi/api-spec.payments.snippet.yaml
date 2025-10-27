@@ -5,7 +5,10 @@ info:
 paths:
   /payments/prepare:
     post:
+      operationId: preparePayment
       summary: Create/ensure an order (idempotent by Idempotency-Key)
+      security:
+        - jwtBearerAuth: []
       parameters:
         - in: header
           name: Idempotency-Key
@@ -48,7 +51,9 @@ paths:
 
   /webhooks/payments/{provider}:
     post:
+      operationId: handlePaymentWebhook
       summary: Provider webhook (exactly-once)
+      security: []
       parameters:
         - in: path
           name: provider
