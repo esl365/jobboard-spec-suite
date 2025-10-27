@@ -17,9 +17,9 @@
 
 import { writeFile, mkdir } from 'fs/promises';
 
-// Use gemini-1.5-flash for fast, cost-effective analysis
-// Alternative: gemini-1.5-pro for more complex reasoning
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+// Use Gemini 1.5 Flash via v1 API (stable)
+// v1 API is more stable than v1beta
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent';
 
 /**
  * Gemini API 호출
