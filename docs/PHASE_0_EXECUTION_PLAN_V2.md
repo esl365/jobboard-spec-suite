@@ -19,26 +19,26 @@
 ### Weeks 1–4: Foundation & Core Modules
 | Week | Goals | Key Deliverables | Checkpoint |
 |------|-------|------------------|------------|
-| 1 | Project scaffolding | NestJS baseline, Prisma schema synced with `db/schema.sql`, ESLint/Prettier config, base CI pipeline skeleton | ✅ Repo ready, CI lint pass |
-| 2 | AuthModule v1 | JWT login/register, password hashing, user entity/migrations, OpenAPI endpoints documented | |
-| 3 | AuthModule v2 | RBAC via `@Roles()` + `RolesGuard`, device/session limits enforced with Redis, unit/integration tests | |
-| 4 | JobModule | CRUD endpoints, search filters, Prisma queries, seed data scripts, API contract tests | **Checkpoint 1**: Auth + Jobs operational, ≥70% coverage |
+| 1 | Project scaffolding | NestJS baseline; Prisma schema synced with `db/schema.sql`; ESLint/Prettier config; base CI pipeline skeleton | ✅ Repo ready; CI lint pass |
+| 2 | AuthModule v1 | JWT login/register; password hashing; user entity and migrations; OpenAPI endpoints documented | |
+| 3 | AuthModule v2 | RBAC via `@Roles()` + `RolesGuard`; device/session limits enforced with Redis; unit/integration tests | |
+| 4 | JobModule | CRUD endpoints; search filters; Prisma queries; seed data scripts; API contract tests | **Checkpoint 1**: Auth + Jobs operational; ≥70% coverage |
 
 ### Weeks 5–8: Business Modules & Automation
 | Week | Goals | Key Deliverables | Checkpoint |
 |------|-------|------------------|------------|
-| 5 | ApplicationModule | Apply workflow, status transitions, audit logging, integration tests |
-| 6 | PaymentModule | Toss/Iamport webhook handlers, signature validation, retry/backoff logic, sandbox verification |
-| 7 | CI/CD Hardening | GitHub Actions pipeline (lint, test, coverage gate, OpenAPI diff, Prisma drift), Docker build/push |
-| 8 | Quality & Docs | E2E tests (Playwright), developer handbook, ADR drafts 001–005 | **Checkpoint 2**: All modules shipped, CI/CD live, ≥80% coverage |
+| 5 | ApplicationModule | Apply workflow; status transitions; audit logging; integration tests |
+| 6 | PaymentModule | Toss/Iamport webhook handlers; signature validation; retry/backoff logic; sandbox verification |
+| 7 | CI/CD Hardening | GitHub Actions pipeline (lint, test, coverage gate, OpenAPI diff, Prisma drift); Docker build/push |
+| 8 | Quality & Docs | E2E tests (Playwright); developer handbook; ADR drafts 001–005 | **Checkpoint 2**: All modules shipped; CI/CD live; ≥80% coverage |
 
 ### Weeks 9–12: Infrastructure, Observability, Production Readiness
 | Week | Goals | Key Deliverables | Checkpoint |
 |------|-------|------------------|------------|
-| 9 | Terraform Foundations | Modules for networking, RDS, ElastiCache, Secrets Manager, remote state setup |
-| 10 | Kubernetes Rollout | EKS cluster provisioning, Helm charts for app, ingress controller, HPA baseline |
-| 11 | Observability & Security | OpenTelemetry exporters, Prometheus/Grafana dashboards, CloudWatch alerts, OWASP ASVS audit |
-| 12 | Production Hardening | Load test + tuning, backup/restore drills, disaster recovery plan, go-live checklist | **Checkpoint 3**: Production deployment live, monitoring operational, Spec Coding compliance verified |
+| 9 | Terraform Foundations | Modules for networking, RDS, ElastiCache, Secrets Manager; remote state setup |
+| 10 | Kubernetes Rollout | EKS cluster provisioning; Helm charts for app; ingress controller; HPA baseline |
+| 11 | Observability & Security | OpenTelemetry exporters; Prometheus/Grafana dashboards; CloudWatch alerts; OWASP ASVS audit |
+| 12 | Production Hardening | Load test and tuning; backup/restore drills; disaster recovery plan; go-live checklist | **Checkpoint 3**: Production deployment live; monitoring operational; Spec Coding compliance verified |
 
 ## Compliance Automation
 - **OpenAPI Enforcement**: Generate spec via `@nestjs/swagger`, diff against `openapi/api-spec.yaml` in CI (`openapi-cli`).
