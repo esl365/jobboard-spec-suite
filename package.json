@@ -5,12 +5,16 @@
   "type": "module",
   "scripts": {
     "preflight": "node scripts/preflight.mjs",
-    "test": "echo \"(stub) tests pass\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "lint:openapi": "node scripts/openapi-lint.mjs openapi/api-spec.yaml",
     "lint:openapi:redocly": "redocly lint openapi/api-spec.yaml"
   },
   "devDependencies": {
     "@redocly/cli": "^1.25.0",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.0.0",
     "yaml": "^2.6.0"
   }
 }
