@@ -7,6 +7,7 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { RedisService } from './services/redis.service';
 import { DeviceSessionService } from './services/device-session.service';
+import { PrismaService } from '../../common/prisma.service';
 
 @Module({
   imports: [
@@ -26,7 +27,13 @@ import { DeviceSessionService } from './services/device-session.service';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, RedisService, DeviceSessionService],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    RedisService,
+    DeviceSessionService,
+    PrismaService,
+  ],
   exports: [AuthService, JwtStrategy, PassportModule, DeviceSessionService],
 })
 export class AuthModule {}

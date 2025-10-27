@@ -2,19 +2,24 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Reflector } from '@nestjs/core';
 import { ExecutionContext } from '@nestjs/common';
 import { RolesGuard } from './roles.guard';
-import { PrismaClient } from '@prisma/client';
-
-jest.mock('@prisma/client');
+import { PrismaService } from '../../../common/prisma.service';
+import { mockDeep, DeepMockProxy } from 'jest-mock-extended';
 
 describe('RolesGuard', () => {
   let guard: RolesGuard;
   let reflector: Reflector;
-  let prisma: jest.Mocked<PrismaClient>;
+  let prismaMock: DeepMockProxy<PrismaService>;
 
   beforeEach(async () => {
+    prismaMock = mockDeep<PrismaService>();
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         RolesGuard,
+        {
+          provide: PrismaService,
+          useValue: prismaMock,
+        },
         {
           provide: Reflector,
           useValue: {
@@ -26,12 +31,6 @@ describe('RolesGuard', () => {
 
     guard = module.get<RolesGuard>(RolesGuard);
     reflector = module.get<Reflector>(Reflector);
-
-    // Mock PrismaClient instance
-    prisma = (guard as any).prisma as jest.Mocked<PrismaClient>;
-    prisma.userRole = {
-      findMany: jest.fn(),
-    } as any;
   });
 
   const createMockExecutionContext = (user: any): ExecutionContext => {
@@ -70,20 +69,22 @@ describe('RolesGuard', () => {
         },
       ];
 
-      prisma.userRole.findMany.mockResolvedValue(mockUserRoles as any);
+      prismaMock.userRole.findMany.mockResolvedValue(mockUserRoles as any);
 
       const context = createMockExecutionContext({ id: 1 });
       const result = await guard.canActivate(context);
 
       expect(result).toBe(true);
-      expect(prisma.userRole.findMany).toHaveBeenCalledWith({
+      expect(prismaMock.userRole.findMany).toHaveBeenCalledWith({
         where: { userId: BigInt(1) },
         include: { role: true },
       });
     });
 
     it('should deny access when user does not have required role', async () => {
-      jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(['admin', 'recruiter']);
+      jest
+        .spyOn(reflector, 'getAllAndOverride')
+        .mockReturnValue(['admin', 'recruiter']);
 
       const mockUserRoles = [
         {
@@ -96,7 +97,7 @@ describe('RolesGuard', () => {
         },
       ];
 
-      prisma.userRole.findMany.mockResolvedValue(mockUserRoles as any);
+      prismaMock.userRole.findMany.mockResolvedValue(mockUserRoles as any);
 
       const context = createMockExecutionContext({ id: 1 });
       const result = await guard.canActivate(context);
@@ -129,7 +130,7 @@ describe('RolesGuard', () => {
         },
       ];
 
-      prisma.userRole.findMany.mockResolvedValue(mockUserRoles as any);
+      prismaMock.userRole.findMany.mockResolvedValue(mockUserRoles as any);
 
       const context = createMockExecutionContext({ id: 1 });
       const result = await guard.canActivate(context);

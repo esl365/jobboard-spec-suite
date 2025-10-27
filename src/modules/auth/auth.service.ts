@@ -1,22 +1,23 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { AuthResponseDto } from './dto/auth-response.dto';
 import { DeviceSessionService } from './services/device-session.service';
+import { PrismaService } from '../../common/prisma.service';
 
 @Injectable()
 export class AuthService {
-  private prisma: PrismaClient;
-
   constructor(
+    private prisma: PrismaService,
     private jwtService: JwtService,
     private deviceSessionService: DeviceSessionService,
-  ) {
-    this.prisma = new PrismaClient();
-  }
+  ) {}
 
   async register(
     registerDto: RegisterDto,
@@ -206,9 +207,5 @@ export class AuthService {
       email: user.email,
       userType: user.userType,
     };
-  }
-
-  async onModuleDestroy() {
-    await this.prisma.$disconnect();
   }
 }
