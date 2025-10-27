@@ -6,6 +6,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { JobModule } from './modules/job/job.module';
 import { ApplicationModule } from './modules/application/application.module';
 import { PaymentModule } from './modules/payment/payment.module';
+import { ResumeModule } from './modules/resume/resume.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { PaymentModule } from './modules/payment/payment.module';
     JobModule,
     ApplicationModule,
     PaymentModule,
+    ResumeModule,
     // UsersModule,
   ],
   controllers: [AppController],
