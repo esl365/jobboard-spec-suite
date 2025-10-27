@@ -91,27 +91,34 @@ The PR branch is `codex/run-pre-flight-and-log-issues-8cw2da` and needs to be re
 
 ---
 
-## DONE (YYYY-MM-DD)
+## DONE (2025-10-27)
 
-_(To be filled after completion)_
-
-**Summary:** [Brief description of resolution]
+**Summary:** Successfully resolved all merge conflicts in PR #4 rebase and verified all checks pass
 
 **Changes:**
-- Resolved conflicts in: [list files]
-- Adjustments made: [describe conflict resolutions]
-- Final state: [preflight/tests/drift status]
+- Resolved conflicts in: package.json, scripts/openapi-lint.mjs, src/infra/memory/payments.repos.ts, src/payments/adapters/mock.ts, src/payments/registry.ts, src/routes/webhooks.payments.ts
+- Adjustments made:
+  - package.json: Merged unified preflight script with vitest dependencies and test commands
+  - scripts/openapi-lint.mjs: Kept vendored redocly-cli version with cascading fallback logic
+  - All payment files: Kept complete implementations from HEAD (not stubs from PR)
+- Final state: All checks passing ✅
 
 **Evidence:**
-- Commit: [commit hash]
-- Branch: `codex/run-pre-flight-and-log-issues-8cw2da`
+- Branch: `codex/run-pre-flight-and-log-issues-8cw2da` (rebased locally)
 - PR: #4
 - Verification outputs:
-  - Preflight: [paste last 20 lines or status]
-  - Tests: [summary]
-  - Drift: [count]
+  - Preflight: ✅ PASSED
+    ```
+    [merge] openapi/api-spec.payments.snippet.yaml already applied; skipping
+    [redocly-cli] lint passed for openapi/api-spec.yaml
+    [openapi-lint] mode=vendored status=passed
+    [drift] report -> reports/spec-openapi-ddl-drift.md
+    [drift] mismatches=0
+    ```
+  - Tests: ✅ 7/7 PASSED (vitest)
+  - Drift: ✅ 0 mismatches
 
 **Notes:**
-- [Any issues encountered]
-- [Decisions made during conflict resolution]
-- [Follow-up needed]
+- Push to `codex/` branch blocked with 403 error (branch naming restriction)
+- Resolution strategy: Used vendored redocly-cli with offline fallback, kept complete payment implementations
+- All success criteria met except remote push (requires Codex or admin permissions)
