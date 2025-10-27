@@ -42,8 +42,8 @@ export class ResumeService {
         jobseekerUserId: BigInt(userId),
         title: createResumeDto.title,
         introduction: createResumeDto.introduction,
-        educationHistory: createResumeDto.educationHistory || [],
-        workExperience: createResumeDto.workExperience || [],
+        educationHistory: (createResumeDto.educationHistory || []) as any,
+        workExperience: (createResumeDto.workExperience || []) as any,
         skills: createResumeDto.skills || [],
         isDefault: createResumeDto.isDefault || false,
       },
@@ -185,10 +185,10 @@ export class ResumeService {
           introduction: updateResumeDto.introduction,
         }),
         ...(updateResumeDto.educationHistory !== undefined && {
-          educationHistory: updateResumeDto.educationHistory,
+          educationHistory: updateResumeDto.educationHistory as any,
         }),
         ...(updateResumeDto.workExperience !== undefined && {
-          workExperience: updateResumeDto.workExperience,
+          workExperience: updateResumeDto.workExperience as any,
         }),
         ...(updateResumeDto.skills !== undefined && {
           skills: updateResumeDto.skills,
