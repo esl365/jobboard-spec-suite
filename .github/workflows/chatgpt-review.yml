@@ -1,0 +1,162 @@
+name: chatgpt-review
+
+# ChatGPT 자동 코드 리뷰
+# PR이 생성되거나 업데이트될 때 자동으로 실행
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: ['main', 'develop']
+  issue_comment:
+    types: [created]
+
+jobs:
+  chatgpt-code-review:
+    # PR에 /review 코멘트가 달렸거나, PR이 열렸을 때만 실행
+    if: |
+      (github.event_name == 'pull_request') ||
+      (github.event_name == 'issue_comment' &&
+       github.event.issue.pull_request &&
+       contains(github.event.comment.body, '/review'))
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 전체 히스토리 필요 (diff 분석용)
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Get PR information
+        id: pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let prNumber, prData;
+
+            if (context.eventName === 'pull_request') {
+              prNumber = context.payload.pull_request.number;
+              prData = context.payload.pull_request;
+            } else if (context.eventName === 'issue_comment') {
+              prNumber = context.payload.issue.number;
+              const { data } = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber
+              });
+              prData = data;
+            }
+
+            core.setOutput('number', prNumber);
+            core.setOutput('title', prData.title);
+            core.setOutput('base', prData.base.ref);
+            core.setOutput('head', prData.head.ref);
+            core.setOutput('author', prData.user.login);
+
+      - name: Get changed files
+        id: files
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: ${{ steps.pr.outputs.number }}
+            });
+
+            const changedFiles = files.map(f => ({
+              filename: f.filename,
+              status: f.status,
+              additions: f.additions,
+              deletions: f.deletions,
+              changes: f.changes,
+              patch: f.patch
+            }));
+
+            const fs = require('fs');
+            fs.writeFileSync('changed-files.json', JSON.stringify(changedFiles, null, 2));
+
+            core.setOutput('count', files.length);
+            core.setOutput('additions', files.reduce((sum, f) => sum + f.additions, 0));
+            core.setOutput('deletions', files.reduce((sum, f) => sum + f.deletions, 0));
+
+      - name: Check if ChatGPT review enabled
+        id: check_enabled
+        run: |
+          if [ -z "${{ secrets.CHATGPT_API_KEY }}" ]; then
+            echo "enabled=false" >> $GITHUB_OUTPUT
+            echo "::warning::CHATGPT_API_KEY not configured. Skipping ChatGPT review."
+            echo "::warning::To enable: Settings → Secrets → New secret → CHATGPT_API_KEY"
+          else
+            echo "enabled=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run ChatGPT Code Review
+        if: steps.check_enabled.outputs.enabled == 'true'
+        env:
+          CHATGPT_API_KEY: ${{ secrets.CHATGPT_API_KEY }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+          PR_TITLE: ${{ steps.pr.outputs.title }}
+          PR_AUTHOR: ${{ steps.pr.outputs.author }}
+          BASE_BRANCH: ${{ steps.pr.outputs.base }}
+          HEAD_BRANCH: ${{ steps.pr.outputs.head }}
+          FILES_COUNT: ${{ steps.files.outputs.count }}
+          ADDITIONS: ${{ steps.files.outputs.additions }}
+          DELETIONS: ${{ steps.files.outputs.deletions }}
+        run: |
+          # ChatGPT 리뷰 스크립트 실행
+          node scripts/chatgpt-review.mjs
+
+      - name: Post review summary
+        if: steps.check_enabled.outputs.enabled == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            // ChatGPT 리뷰 결과 읽기
+            let reviewResult;
+            try {
+              reviewResult = JSON.parse(fs.readFileSync('chatgpt-review-result.json', 'utf8'));
+            } catch (error) {
+              console.log('No review result file found');
+              return;
+            }
+
+            // PR에 리뷰 코멘트 작성
+            await github.rest.pulls.createReview({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: ${{ steps.pr.outputs.number }},
+              body: reviewResult.summary,
+              event: reviewResult.verdict, // APPROVE, REQUEST_CHANGES, COMMENT
+              comments: reviewResult.inline_comments || []
+            });
+
+            // 리뷰 통계 출력
+            console.log('Review completed:', reviewResult.verdict);
+
+      - name: Summary
+        run: |
+          echo "## ChatGPT Code Review Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**PR**: #${{ steps.pr.outputs.number }} - ${{ steps.pr.outputs.title }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Author**: ${{ steps.pr.outputs.author }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Changes**: ${{ steps.files.outputs.count }} files (+${{ steps.files.outputs.additions }} / -${{ steps.files.outputs.deletions }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ steps.check_enabled.outputs.enabled }}" = "true" ]; then
+            echo "✅ ChatGPT review completed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ ChatGPT review skipped (API key not configured)" >> $GITHUB_STEP_SUMMARY
+          fi
