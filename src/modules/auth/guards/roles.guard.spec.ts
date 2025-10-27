@@ -82,9 +82,7 @@ describe('RolesGuard', () => {
     });
 
     it('should deny access when user does not have required role', async () => {
-      jest
-        .spyOn(reflector, 'getAllAndOverride')
-        .mockReturnValue(['admin', 'recruiter']);
+      jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(['admin', 'recruiter']);
 
       const mockUserRoles = [
         {

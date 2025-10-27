@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './modules/auth/auth.module';
+import { JobModule } from './modules/job/job.module';
 
 @Module({
   imports: [
@@ -14,7 +15,7 @@ import { AuthModule } from './modules/auth/auth.module';
 
     // Feature modules
     AuthModule,
-    // JobsModule,
+    JobModule,
     // ApplicationsModule,
     // PaymentsModule,
     // UsersModule,
