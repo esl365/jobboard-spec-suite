@@ -1,9 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-  NotFoundException,
-  ForbiddenException,
-  BadRequestException,
-} from '@nestjs/common';
+import { NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { ResumeService } from './resume.service';
 import { PrismaService } from '../../common/prisma.service';
 import { FileStorageService } from '../../common/storage/file-storage.service';
@@ -177,9 +173,7 @@ describe('ResumeService', () => {
     it('should throw NotFoundException if resume not found', async () => {
       prismaMock.resume.findUnique.mockResolvedValue(null);
 
-      await expect(service.findOne(999, 1, ['jobseeker'])).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.findOne(999, 1, ['jobseeker'])).rejects.toThrow(NotFoundException);
     });
 
     it('should throw ForbiddenException if user is not owner', async () => {
@@ -194,9 +188,7 @@ describe('ResumeService', () => {
 
       prismaMock.resume.findUnique.mockResolvedValue(mockResume as any);
 
-      await expect(service.findOne(1, 1, ['jobseeker'])).rejects.toThrow(
-        ForbiddenException,
-      );
+      await expect(service.findOne(1, 1, ['jobseeker'])).rejects.toThrow(ForbiddenException);
     });
   });
 
@@ -249,9 +241,9 @@ describe('ResumeService', () => {
 
       prismaMock.resume.findUnique.mockResolvedValue(existingResume as any);
 
-      await expect(
-        service.update(1, { title: 'New Title' }, 1, ['jobseeker']),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.update(1, { title: 'New Title' }, 1, ['jobseeker'])).rejects.toThrow(
+        ForbiddenException,
+      );
     });
   });
 
@@ -290,9 +282,7 @@ describe('ResumeService', () => {
       prismaMock.resume.findUnique.mockResolvedValue(existingResume as any);
       prismaMock.jobApplication.count.mockResolvedValue(2); // Has active applications
 
-      await expect(service.remove(1, 1, ['jobseeker'])).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.remove(1, 1, ['jobseeker'])).rejects.toThrow(BadRequestException);
     });
   });
 

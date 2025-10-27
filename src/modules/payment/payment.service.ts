@@ -6,7 +6,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
-import { TossPaymentsService } from './toss-payments.service';
+import { PaymentProviderFactory, PaymentProviderType } from './payment-provider.factory';
 import { InitiatePaymentDto } from './dto/initiate-payment.dto';
 import { ConfirmPaymentDto } from './dto/confirm-payment.dto';
 import {
@@ -24,7 +24,7 @@ export class PaymentService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly tossPaymentsService: TossPaymentsService,
+    private readonly providerFactory: PaymentProviderFactory,
   ) {}
 
   /**
@@ -33,6 +33,7 @@ export class PaymentService {
   async initiatePayment(
     initiateDto: InitiatePaymentDto,
     userId: number,
+    providerType: PaymentProviderType = 'toss', // Default to Toss for Korea
   ): Promise<PaymentInitiateResponseDto> {
     const { amount, productType, packageId, orderName } = initiateDto;
 
@@ -52,9 +53,7 @@ export class PaymentService {
 
       // Validate amount matches package price
       if (Number(pkg.price) !== amount) {
-        throw new BadRequestException(
-          'Amount does not match package price',
-        );
+        throw new BadRequestException('Amount does not match package price');
       }
     }
 
@@ -65,20 +64,34 @@ export class PaymentService {
         packageId: packageId || null,
         totalAmount: amount,
         status: 'PENDING',
+        provider: providerType, // Store provider type
       },
     });
 
     const orderId = `ORDER_${order.id}`;
-    const checkoutUrl = `${process.env.FRONTEND_URL}/payment/checkout?orderId=${orderId}&amount=${amount}`;
+
+    // Get user for email
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    // Use provider through factory
+    const provider = this.providerFactory.getProvider(providerType);
+    const result = await provider.initiate({
+      orderId,
+      amount,
+      orderName: orderName || `Order #${order.id}`,
+      customerEmail: user?.email || '',
+    });
 
     this.logger.log(
-      `Payment initiated: orderId=${orderId}, userId=${userId}, amount=${amount}`,
+      `Payment initiated: orderId=${orderId}, provider=${providerType}, amount=${amount}`,
     );
 
     return {
-      orderId,
-      amount,
-      checkoutUrl,
+      orderId: result.orderId,
+      amount: result.amount,
+      checkoutUrl: result.checkoutUrl,
       createdAt: order.createdAt.toISOString(),
     };
   }
@@ -86,10 +99,7 @@ export class PaymentService {
   /**
    * Confirm payment after user completes payment on Toss Payments
    */
-  async confirmPayment(
-    confirmDto: ConfirmPaymentDto,
-    userId: number,
-  ): Promise<OrderResponseDto> {
+  async confirmPayment(confirmDto: ConfirmPaymentDto, userId: number): Promise<OrderResponseDto> {
     const { paymentKey, orderId, amount } = confirmDto;
 
     // Extract order ID from string (ORDER_12345 -> 12345)
@@ -116,16 +126,18 @@ export class PaymentService {
 
     // Verify order is still pending
     if (order.status !== 'PENDING') {
-      throw new BadRequestException(
-        `Order already processed with status: ${order.status}`,
-      );
+      throw new BadRequestException(`Order already processed with status: ${order.status}`);
     }
 
     try {
-      // Confirm payment with Toss Payments
-      const tossResponse = await this.tossPaymentsService.confirmPayment({
-        paymentKey,
+      // Get provider from order
+      const providerType = (order.provider || 'toss') as PaymentProviderType;
+      const provider = this.providerFactory.getProvider(providerType);
+
+      // Confirm with provider
+      const result = await provider.confirm({
         orderId,
+        paymentKey,
         amount,
       });
 
@@ -133,18 +145,16 @@ export class PaymentService {
       const updatedOrder = await this.prisma.order.update({
         where: { id: BigInt(orderIdNum) },
         data: {
-          status: 'COMPLETED',
-          paymentMethod: tossResponse.method,
-          pgTransactionId: paymentKey,
+          status: result.status === 'COMPLETED' ? 'COMPLETED' : 'FAILED',
+          paymentMethod: result.raw?.method || null,
+          pgTransactionId: result.transactionId,
         },
       });
 
       // Credit points to user wallet
       await this.creditWallet(userId, amount, orderIdNum);
 
-      this.logger.log(
-        `Payment confirmed: orderId=${orderId}, userId=${userId}, amount=${amount}`,
-      );
+      this.logger.log(`Payment confirmed: orderId=${orderId}, userId=${userId}, amount=${amount}`);
 
       return this.mapOrderToResponseDto(updatedOrder);
     } catch (error) {
@@ -155,20 +165,14 @@ export class PaymentService {
       });
 
       this.logger.error('Payment confirmation failed', error);
-      throw new BadRequestException(
-        `Payment confirmation failed: ${error.message}`,
-      );
+      throw new BadRequestException(`Payment confirmation failed: ${error.message}`);
     }
   }
 
   /**
    * Credit points to user wallet
    */
-  private async creditWallet(
-    userId: number,
-    amount: number,
-    orderId: number,
-  ): Promise<void> {
+  private async creditWallet(userId: number, amount: number, orderId: number): Promise<void> {
     // Ensure wallet exists
     const wallet = await this.prisma.userWallet.upsert({
       where: { userId: BigInt(userId) },
@@ -202,9 +206,7 @@ export class PaymentService {
       },
     });
 
-    this.logger.log(
-      `Wallet credited: userId=${userId}, amount=${amount} points`,
-    );
+    this.logger.log(`Wallet credited: userId=${userId}, amount=${amount} points`);
   }
 
   /**
@@ -215,13 +217,7 @@ export class PaymentService {
     query: PaymentQueryDto,
     userRoles: string[],
   ): Promise<OrderListResponseDto> {
-    const {
-      page = 1,
-      limit = 20,
-      status,
-      sortBy = 'createdAt',
-      sortOrder = 'desc',
-    } = query;
+    const { page = 1, limit = 20, status, sortBy = 'createdAt', sortOrder = 'desc' } = query;
 
     const skip = (page - 1) * limit;
     const take = limit;
@@ -294,12 +290,7 @@ export class PaymentService {
     query: PaymentQueryDto,
     userRoles: string[],
   ): Promise<PointTransactionListResponseDto> {
-    const {
-      page = 1,
-      limit = 20,
-      sortBy = 'createdAt',
-      sortOrder = 'desc',
-    } = query;
+    const { page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc' } = query;
 
     const skip = (page - 1) * limit;
     const take = limit;
@@ -330,9 +321,7 @@ export class PaymentService {
     const totalPages = Math.ceil(total / limit);
 
     return {
-      data: transactions.map((tx) =>
-        this.mapPointTransactionToResponseDto(tx),
-      ),
+      data: transactions.map((tx) => this.mapPointTransactionToResponseDto(tx)),
       meta: { total, page, limit, totalPages },
     };
   }
@@ -375,17 +364,13 @@ export class PaymentService {
     };
   }
 
-  private mapPointTransactionToResponseDto(
-    tx: any,
-  ): PointTransactionResponseDto {
+  private mapPointTransactionToResponseDto(tx: any): PointTransactionResponseDto {
     return {
       id: Number(tx.id),
       userId: Number(tx.userId),
       amount: Number(tx.amount),
       reasonType: tx.reasonType,
-      relatedOrderId: tx.relatedOrderId
-        ? Number(tx.relatedOrderId)
-        : undefined,
+      relatedOrderId: tx.relatedOrderId ? Number(tx.relatedOrderId) : undefined,
       description: tx.description,
       createdAt: tx.createdAt.toISOString(),
     };

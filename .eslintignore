@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+.next/
+
+# Test coverage
+coverage/
+
+# Frontend (has its own ESLint config)
+frontend/
+
+# Generated files
+*.tsbuildinfo
+
+# Config files
+*.config.js
+*.config.ts
+
+# Scripts
+scripts/
+
+# Tests (e2e)
+tests/
+
+# Misc
+.git/
+.vscode/
+.idea/

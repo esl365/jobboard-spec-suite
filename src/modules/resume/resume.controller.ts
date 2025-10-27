@@ -29,10 +29,7 @@ import {
 import { ResumeService } from './resume.service';
 import { CreateResumeDto } from './dto/create-resume.dto';
 import { UpdateResumeDto } from './dto/update-resume.dto';
-import {
-  ResumeResponseDto,
-  ResumeListResponseDto,
-} from './dto/resume-response.dto';
+import { ResumeResponseDto, ResumeListResponseDto } from './dto/resume-response.dto';
 import { ResumeQueryDto } from './dto/resume-query.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -80,10 +77,7 @@ export class ResumeController {
     type: ResumeListResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async findAll(
-    @Query() query: ResumeQueryDto,
-    @Req() req: any,
-  ): Promise<ResumeListResponseDto> {
+  async findAll(@Query() query: ResumeQueryDto, @Req() req: any): Promise<ResumeListResponseDto> {
     return this.resumeService.findAll(req.user.id, query, req.user.roles);
   }
 
@@ -104,10 +98,7 @@ export class ResumeController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Resume not found' })
-  async findOne(
-    @Param('id') id: string,
-    @Req() req: any,
-  ): Promise<ResumeResponseDto> {
+  async findOne(@Param('id') id: string, @Req() req: any): Promise<ResumeResponseDto> {
     return this.resumeService.findOne(+id, req.user.id, req.user.roles);
   }
 
@@ -132,12 +123,7 @@ export class ResumeController {
     @Body() updateResumeDto: UpdateResumeDto,
     @Req() req: any,
   ): Promise<ResumeResponseDto> {
-    return this.resumeService.update(
-      +id,
-      updateResumeDto,
-      req.user.id,
-      req.user.roles,
-    );
+    return this.resumeService.update(+id, updateResumeDto, req.user.id, req.user.roles);
   }
 
   @Delete(':id')
@@ -174,10 +160,7 @@ export class ResumeController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Resume not found' })
-  async setDefault(
-    @Param('id') id: string,
-    @Req() req: any,
-  ): Promise<ResumeResponseDto> {
+  async setDefault(@Param('id') id: string, @Req() req: any): Promise<ResumeResponseDto> {
     return this.resumeService.setDefault(+id, req.user.id, req.user.roles);
   }
 
@@ -227,11 +210,7 @@ export class ResumeController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Resume or PDF not found' })
-  async downloadPDF(
-    @Param('id') id: string,
-    @Req() req: any,
-    @Res() res: Response,
-  ): Promise<void> {
+  async downloadPDF(@Param('id') id: string, @Req() req: any, @Res() res: Response): Promise<void> {
     const { buffer, filename } = await this.resumeService.downloadPDF(
       +id,
       req.user.id,
@@ -260,10 +239,7 @@ export class ResumeController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Resume not found' })
-  async deletePDF(
-    @Param('id') id: string,
-    @Req() req: any,
-  ): Promise<ResumeResponseDto> {
+  async deletePDF(@Param('id') id: string, @Req() req: any): Promise<ResumeResponseDto> {
     return this.resumeService.deletePDF(+id, req.user.id, req.user.roles);
   }
 }

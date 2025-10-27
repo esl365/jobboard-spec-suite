@@ -236,11 +236,7 @@ export class ApplicationService {
     };
   }
 
-  async findOne(
-    id: number,
-    userId: number,
-    userRoles: string[],
-  ): Promise<ApplicationResponseDto> {
+  async findOne(id: number, userId: number, userRoles: string[]): Promise<ApplicationResponseDto> {
     const application = await this.prisma.jobApplication.findUnique({
       where: { id: BigInt(id) },
       include: {
@@ -389,11 +385,7 @@ export class ApplicationService {
     return this.mapToResponseDto(updatedApplication);
   }
 
-  async remove(
-    id: number,
-    userId: number,
-    userRoles: string[],
-  ): Promise<void> {
+  async remove(id: number, userId: number, userRoles: string[]): Promise<void> {
     const existingApplication = await this.prisma.jobApplication.findUnique({
       where: { id: BigInt(id) },
     });

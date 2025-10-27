@@ -205,9 +205,7 @@ describe('ApplicationService', () => {
       prismaMock.resume.findUnique.mockResolvedValue(mockResume as any);
       prismaMock.jobApplication.findUnique.mockResolvedValue(mockExistingApplication as any);
 
-      await expect(service.create({ jobId: 1, resumeId: 1 }, 1)).rejects.toThrow(
-        ConflictException,
-      );
+      await expect(service.create({ jobId: 1, resumeId: 1 }, 1)).rejects.toThrow(ConflictException);
     });
 
     it('should throw ForbiddenException if resume does not belong to user', async () => {
@@ -364,9 +362,9 @@ describe('ApplicationService', () => {
 
       prismaMock.jobApplication.findUnique.mockResolvedValue(existingApplication as any);
 
-      await expect(
-        service.update(1, { status: 'HIRED' }, 1, ['jobseeker']),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.update(1, { status: 'HIRED' }, 1, ['jobseeker'])).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('should throw BadRequestException if trying to update withdrawn application', async () => {
@@ -381,9 +379,9 @@ describe('ApplicationService', () => {
 
       prismaMock.jobApplication.findUnique.mockResolvedValue(existingApplication as any);
 
-      await expect(
-        service.update(1, { status: 'ACTIVE' }, 2, ['recruiter']),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.update(1, { status: 'ACTIVE' }, 2, ['recruiter'])).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 

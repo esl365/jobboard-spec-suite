@@ -33,8 +33,15 @@ export class ApplicationController {
   @Roles('jobseeker')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Apply to a job (jobseeker only)' })
-  @ApiResponse({ status: 201, description: 'Application created successfully', type: ApplicationResponseDto })
-  @ApiResponse({ status: 400, description: 'Bad request (job not active, duplicate application, etc.)' })
+  @ApiResponse({
+    status: 201,
+    description: 'Application created successfully',
+    type: ApplicationResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad request (job not active, duplicate application, etc.)',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden (not a jobseeker)' })
   @ApiResponse({ status: 404, description: 'Job or resume not found' })
@@ -52,9 +59,14 @@ export class ApplicationController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Get list of applications (role-filtered)',
-    description: 'Jobseekers see their own applications, recruiters see applications for their jobs, admins see all'
+    description:
+      'Jobseekers see their own applications, recruiters see applications for their jobs, admins see all',
   })
-  @ApiResponse({ status: 200, description: 'List of applications', type: ApplicationListResponseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'List of applications',
+    type: ApplicationListResponseDto,
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   async findAll(
@@ -70,16 +82,14 @@ export class ApplicationController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Get application by ID',
-    description: 'Users can only view their own applications or applications for their jobs (recruiters)'
+    description:
+      'Users can only view their own applications or applications for their jobs (recruiters)',
   })
   @ApiResponse({ status: 200, description: 'Application found', type: ApplicationResponseDto })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Application not found' })
-  async findOne(
-    @Param('id') id: string,
-    @Req() req: any,
-  ): Promise<ApplicationResponseDto> {
+  async findOne(@Param('id') id: string, @Req() req: any): Promise<ApplicationResponseDto> {
     return this.applicationService.findOne(+id, req.user.id, req.user.roles);
   }
 
@@ -89,7 +99,7 @@ export class ApplicationController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Update application (status or stage)',
-    description: 'Jobseekers can only withdraw, recruiters can update status/stage for their jobs'
+    description: 'Jobseekers can only withdraw, recruiters can update status/stage for their jobs',
   })
   @ApiResponse({ status: 200, description: 'Application updated', type: ApplicationResponseDto })
   @ApiResponse({ status: 400, description: 'Bad request (invalid status transition)' })
@@ -111,17 +121,14 @@ export class ApplicationController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Withdraw application (jobseeker or admin)',
-    description: 'Soft delete by setting status to WITHDRAWN_BY_USER'
+    description: 'Soft delete by setting status to WITHDRAWN_BY_USER',
   })
   @ApiResponse({ status: 204, description: 'Application withdrawn' })
   @ApiResponse({ status: 400, description: 'Bad request (already withdrawn)' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Application not found' })
-  async remove(
-    @Param('id') id: string,
-    @Req() req: any,
-  ): Promise<void> {
+  async remove(@Param('id') id: string, @Req() req: any): Promise<void> {
     return this.applicationService.remove(+id, req.user.id, req.user.roles);
   }
 }
