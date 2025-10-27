@@ -16,6 +16,7 @@ import {
   ApiConflictResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { Request } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
@@ -29,6 +30,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
+  @Throttle({ default: { limit: 3, ttl: 60000 } }) // 3 requests per minute
   @ApiOperation({ summary: 'Register a new user' })
   @ApiResponse({
     status: 201,
@@ -37,6 +39,7 @@ export class AuthController {
   })
   @ApiBadRequestResponse({ description: 'Invalid input data' })
   @ApiConflictResponse({ description: 'User with this email already exists' })
+  @ApiResponse({ status: 429, description: 'Too many requests. Please try again later.' })
   async register(@Body() registerDto: RegisterDto, @Req() req: Request): Promise<AuthResponseDto> {
     const userAgent = req.headers['user-agent'] || 'unknown';
     const ipAddress = (req.ip || req.socket.remoteAddress || 'unknown') as string;
@@ -45,6 +48,7 @@ export class AuthController {
   }
 
   @Post('login')
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login with email and password' })
   @ApiResponse({
@@ -54,6 +58,7 @@ export class AuthController {
   })
   @ApiBadRequestResponse({ description: 'Invalid input data' })
   @ApiResponse({ status: 401, description: 'Invalid email or password' })
+  @ApiResponse({ status: 429, description: 'Too many requests. Please try again later.' })
   async login(@Body() loginDto: LoginDto, @Req() req: Request): Promise<AuthResponseDto> {
     const userAgent = req.headers['user-agent'] || 'unknown';
     const ipAddress = (req.ip || req.socket.remoteAddress || 'unknown') as string;
