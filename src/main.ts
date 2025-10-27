@@ -19,7 +19,13 @@ async function bootstrap() {
   );
 
   // CORS
-  app.enableCors();
+  app.enableCors({
+    origin: [
+      'http://localhost:3001', // Next.js dev server
+      process.env.FRONTEND_URL || 'http://localhost:3000',
+    ],
+    credentials: true,
+  });
 
   // Swagger / OpenAPI
   const config = new DocumentBuilder()

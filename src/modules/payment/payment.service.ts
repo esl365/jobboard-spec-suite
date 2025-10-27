@@ -6,7 +6,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
-import { TossPaymentsService } from './toss-payments.service';
+import { PaymentProviderFactory, PaymentProviderType } from './payment-provider.factory';
 import { InitiatePaymentDto } from './dto/initiate-payment.dto';
 import { ConfirmPaymentDto } from './dto/confirm-payment.dto';
 import {
@@ -24,7 +24,7 @@ export class PaymentService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly tossPaymentsService: TossPaymentsService,
+    private readonly providerFactory: PaymentProviderFactory,
   ) {}
 
   /**
@@ -33,6 +33,7 @@ export class PaymentService {
   async initiatePayment(
     initiateDto: InitiatePaymentDto,
     userId: number,
+    providerType: PaymentProviderType = 'toss', // Default to Toss for Korea
   ): Promise<PaymentInitiateResponseDto> {
     const { amount, productType, packageId, orderName } = initiateDto;
 
@@ -65,20 +66,34 @@ export class PaymentService {
         packageId: packageId || null,
         totalAmount: amount,
         status: 'PENDING',
+        provider: providerType, // Store provider type
       },
     });
 
     const orderId = `ORDER_${order.id}`;
-    const checkoutUrl = `${process.env.FRONTEND_URL}/payment/checkout?orderId=${orderId}&amount=${amount}`;
+
+    // Get user for email
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    // Use provider through factory
+    const provider = this.providerFactory.getProvider(providerType);
+    const result = await provider.initiate({
+      orderId,
+      amount,
+      orderName: orderName || `Order #${order.id}`,
+      customerEmail: user?.email || '',
+    });
 
     this.logger.log(
-      `Payment initiated: orderId=${orderId}, userId=${userId}, amount=${amount}`,
+      `Payment initiated: orderId=${orderId}, provider=${providerType}, amount=${amount}`,
     );
 
     return {
-      orderId,
-      amount,
-      checkoutUrl,
+      orderId: result.orderId,
+      amount: result.amount,
+      checkoutUrl: result.checkoutUrl,
       createdAt: order.createdAt.toISOString(),
     };
   }
@@ -122,10 +137,14 @@ export class PaymentService {
     }
 
     try {
-      // Confirm payment with Toss Payments
-      const tossResponse = await this.tossPaymentsService.confirmPayment({
-        paymentKey,
+      // Get provider from order
+      const providerType = (order.provider || 'toss') as PaymentProviderType;
+      const provider = this.providerFactory.getProvider(providerType);
+
+      // Confirm with provider
+      const result = await provider.confirm({
         orderId,
+        paymentKey,
         amount,
       });
 
@@ -133,9 +152,9 @@ export class PaymentService {
       const updatedOrder = await this.prisma.order.update({
         where: { id: BigInt(orderIdNum) },
         data: {
-          status: 'COMPLETED',
-          paymentMethod: tossResponse.method,
-          pgTransactionId: paymentKey,
+          status: result.status === 'COMPLETED' ? 'COMPLETED' : 'FAILED',
+          paymentMethod: result.raw?.method || null,
+          pgTransactionId: result.transactionId,
         },
       });
 

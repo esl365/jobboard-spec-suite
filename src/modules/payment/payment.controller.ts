@@ -17,6 +17,7 @@ import {
   ApiResponse,
 } from '@nestjs/swagger';
 import { PaymentService } from './payment.service';
+import { PaymentProviderType } from './payment-provider.factory';
 import { InitiatePaymentDto } from './dto/initiate-payment.dto';
 import { ConfirmPaymentDto } from './dto/confirm-payment.dto';
 import {
@@ -54,8 +55,13 @@ export class PaymentController {
   async initiatePayment(
     @Body() initiateDto: InitiatePaymentDto,
     @Req() req: any,
+    @Query('provider') provider: PaymentProviderType = 'toss',
   ): Promise<PaymentInitiateResponseDto> {
-    return this.paymentService.initiatePayment(initiateDto, req.user.id);
+    return this.paymentService.initiatePayment(
+      initiateDto,
+      req.user.id,
+      provider,
+    );
   }
 
   @Post('confirm')

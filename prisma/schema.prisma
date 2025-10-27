@@ -273,6 +273,7 @@ model Order {
   totalAmount      Decimal      @map("total_amount") @db.Decimal(15, 2)
   paymentMethod    String?      @map("payment_method") @db.VarChar(50)
   pgTransactionId  String?      @unique @map("pg_transaction_id") @db.VarChar(255)
+  provider         String?      @default("toss") @db.VarChar(50)
   status           OrderStatus  @default(PENDING)
   createdAt        DateTime     @default(now()) @map("created_at")
   updatedAt        DateTime     @updatedAt @map("updated_at")
