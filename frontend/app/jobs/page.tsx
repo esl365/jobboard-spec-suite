@@ -37,14 +37,29 @@ export default function JobsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchInput, setSearchInput] = useState('');
 
+  // Filter states
+  const [filters, setFilters] = useState({
+    location: '',
+    remote: undefined as boolean | undefined,
+    employmentType: '',
+  });
+
+  const [showFilters, setShowFilters] = useState(false);
+
   useEffect(() => {
     loadJobs();
-  }, [searchQuery]);
+  }, [searchQuery, filters]);
 
   const loadJobs = async () => {
     setLoading(true);
     try {
-      const params = searchQuery ? { search: searchQuery } : {};
+      const params: any = {};
+
+      if (searchQuery) params.search = searchQuery;
+      if (filters.location) params.location = filters.location;
+      if (filters.remote !== undefined) params.remote = filters.remote;
+      if (filters.employmentType) params.employmentType = filters.employmentType;
+
       const data = await apiClient.getJobs(params);
       setJobs(data.jobs || []);
     } catch (err: any) {
@@ -64,6 +79,20 @@ export default function JobsPage() {
     setSearchInput('');
     setSearchQuery('');
   };
+
+  const handleFilterChange = (key: string, value: any) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleClearFilters = () => {
+    setFilters({
+      location: '',
+      remote: undefined,
+      employmentType: '',
+    });
+  };
+
+  const hasActiveFilters = filters.location || filters.remote !== undefined || filters.employmentType;
 
   if (loading) {
     return (
@@ -138,6 +167,97 @@ export default function JobsPage() {
             </div>
           )}
         </form>
+
+        {/* Filter Toggle Button */}
+        <div className="mb-4 flex items-center justify-between">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+              />
+            </svg>
+            <span className="font-medium">Filters</span>
+            {hasActiveFilters && (
+              <span className="ml-1 px-2 py-0.5 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">
+                Active
+              </span>
+            )}
+          </button>
+
+          {hasActiveFilters && (
+            <button
+              onClick={handleClearFilters}
+              className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+            >
+              Clear all filters
+            </button>
+          )}
+        </div>
+
+        {/* Filter Panel */}
+        {showFilters && (
+          <div className="mb-6 bg-white border border-gray-200 rounded-lg p-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Location Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Location
+                </label>
+                <input
+                  type="text"
+                  value={filters.location}
+                  onChange={(e) => handleFilterChange('location', e.target.value)}
+                  placeholder="e.g., Seoul, Busan"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                />
+              </div>
+
+              {/* Remote Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Work Type
+                </label>
+                <select
+                  value={filters.remote === undefined ? '' : filters.remote ? 'remote' : 'onsite'}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    handleFilterChange('remote', value === '' ? undefined : value === 'remote');
+                  }}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                >
+                  <option value="">All</option>
+                  <option value="remote">Remote</option>
+                  <option value="onsite">On-site</option>
+                </select>
+              </div>
+
+              {/* Employment Type Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Employment Type
+                </label>
+                <select
+                  value={filters.employmentType}
+                  onChange={(e) => handleFilterChange('employmentType', e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                >
+                  <option value="">All Types</option>
+                  <option value="FULL_TIME">Full-time</option>
+                  <option value="PART_TIME">Part-time</option>
+                  <option value="CONTRACT">Contract</option>
+                  <option value="INTERNSHIP">Internship</option>
+                  <option value="FREELANCE">Freelance</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
 
         {error && (
           <div className="bg-red-50 text-red-600 p-4 rounded-lg mb-6">

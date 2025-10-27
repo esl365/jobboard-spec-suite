@@ -51,6 +51,8 @@ export class JobService {
       locationGuIdx,
       jobTypeIdx,
       search,
+      location,
+      remote,
       sortBy = 'createdAt',
       sortOrder = 'desc',
     } = query;
@@ -85,7 +87,21 @@ export class JobService {
     }
 
     if (search) {
-      where.OR = [{ title: { contains: search } }, { description: { contains: search } }];
+      where.OR = [
+        { title: { contains: search } },
+        { description: { contains: search } },
+        ...(location ? [] : [{ location: { contains: search } }]),
+      ];
+    }
+
+    // Location filtering
+    if (location) {
+      where.location = { contains: location, mode: 'insensitive' };
+    }
+
+    // Remote filtering
+    if (remote !== undefined) {
+      where.remote = remote;
     }
 
     // Salary range filtering
