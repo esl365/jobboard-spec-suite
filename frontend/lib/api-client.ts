@@ -83,7 +83,17 @@ class ApiClient {
 
   // Applications
   async applyToJob(jobId: number, resumeId: number, coverLetter?: string) {
-    const { data } = await this.client.post(`/jobs/${jobId}/apply`, { resumeId, coverLetter });
+    const { data } = await this.client.post('/applications', { jobId, resumeId, coverLetter });
+    return data;
+  }
+
+  async getApplications(params?: any) {
+    const { data } = await this.client.get('/applications', { params });
+    return data;
+  }
+
+  async updateApplication(id: number, updateData: any) {
+    const { data } = await this.client.put(`/applications/${id}`, updateData);
     return data;
   }
 

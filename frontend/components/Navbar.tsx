@@ -31,6 +31,14 @@ export default function Navbar() {
               >
                 Browse Jobs
               </Link>
+              {isAuthenticated && (
+                <Link
+                  href="/dashboard"
+                  className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition"
+                >
+                  Dashboard
+                </Link>
+              )}
               {isAuthenticated && user?.userType === 'COMPANY' && (
                 <Link
                   href="/jobs/new"
@@ -87,6 +95,12 @@ export default function Navbar() {
             className="block px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
           >
             Browse Jobs
+          </Link>
+          <Link
+            href="/dashboard"
+            className="block px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+          >
+            Dashboard
           </Link>
           {user?.userType === 'COMPANY' && (
             <Link

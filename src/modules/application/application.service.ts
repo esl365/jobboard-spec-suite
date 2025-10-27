@@ -6,6 +6,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
+import { EmailService } from '../email/email.service';
 import { CreateApplicationDto } from './dto/create-application.dto';
 import { UpdateApplicationDto } from './dto/update-application.dto';
 import { ApplicationResponseDto } from './dto/application-response.dto';
@@ -14,7 +15,10 @@ import { ApplicationListResponseDto } from './dto/application-list-response.dto'
 
 @Injectable()
 export class ApplicationService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly emailService: EmailService,
+  ) {}
 
   async create(
     createApplicationDto: CreateApplicationDto,
@@ -123,6 +127,15 @@ export class ApplicationService {
         currentStage: true,
       },
     });
+
+    // Send email notification to company (fire and forget - don't block response)
+    this.emailService
+      .sendApplicationReceivedEmail(
+        application.job.company.email,
+        application.job.title,
+        application.jobseeker.personalProfile?.username || application.jobseeker.email,
+      )
+      .catch((err) => console.error('Failed to send application received email:', err));
 
     return this.mapToResponseDto(application);
   }
@@ -381,6 +394,19 @@ export class ApplicationService {
         currentStage: true,
       },
     });
+
+    // Send email notification to job seeker if status changed (fire and forget)
+    if (updateData.status && updateData.status !== existingApplication.status) {
+      this.emailService
+        .sendApplicationStatusEmail(
+          updatedApplication.jobseeker.email,
+          updatedApplication.job.title,
+          updatedApplication.job.company.companyProfile?.companyName ||
+            updatedApplication.job.company.email,
+          updateData.status,
+        )
+        .catch((err) => console.error('Failed to send application status email:', err));
+    }
 
     return this.mapToResponseDto(updatedApplication);
   }
