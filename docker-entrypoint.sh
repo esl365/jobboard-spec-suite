@@ -3,28 +3,10 @@ set -e
 
 echo "Starting Job Board API..."
 
-# Wait for database to be ready
-echo "Waiting for database..."
-until node -e "
-const mysql = require('mysql2/promise');
-const url = process.env.DATABASE_URL;
-(async () => {
-  try {
-    const connection = await mysql.createConnection(url);
-    await connection.ping();
-    await connection.end();
-    console.log('Database is ready!');
-  } catch (err) {
-    console.log('Database not ready:', err.message);
-    process.exit(1);
-  }
-})();
-" 2>/dev/null; do
-  echo "Database is unavailable - sleeping"
-  sleep 2
-done
-
-echo "Database is up - continuing..."
+# Simple wait for database (rely on docker-compose healthcheck)
+echo "Waiting for database to be ready..."
+sleep 10
+echo "Database should be ready - continuing..."
 
 # Run Prisma migrations (if needed)
 if [ "$RUN_MIGRATIONS" = "true" ]; then
