@@ -1,6 +1,8 @@
-# Quick Start: 3-LLM Collaboration System
+# Quick Start: 4-LLM Collaboration System
 
-> **목표**: 10분 안에 ChatGPT, Claude Code, Codex 협업 시스템을 시작하기
+> **목표**: 10분 안에 Gemini, ChatGPT, Claude Code, Codex 협업 시스템을 시작하기
+>
+> **New**: Claude Code가 Issue 생성까지 자동화! 사용자 시간 **5-10분/일**
 
 ---
 
@@ -24,16 +26,22 @@
 |------|-------|
 | `CLAUDE_INBOX_ISSUE_NUMBER` | `10` (위에서 생성한 이슈 번호) |
 
-#### 1.3 ChatGPT API Key 추가 (선택사항)
+#### 1.3 Gemini API Key 추가 (선택사항, 강력 권장)
 
 **Settings** → **Secrets and variables** → **Actions** → **Secrets** 탭
 
-| Name | Value |
-|------|-------|
-| `CHATGPT_API_KEY` | `sk-...` (OpenAI API 키) |
+| Name | Value | Purpose |
+|------|-------|---------|
+| `GEMINI_API_KEY` | `AIza...` | 명세 자동 생성 (Google AI Studio) |
+| `CHATGPT_API_KEY` | `sk-...` | 코드 자동 리뷰 (OpenAI) |
 
-> ⚠️ ChatGPT 자동 리뷰를 사용하려면 OpenAI API 키가 필요합니다.
-> 키가 없으면 수동 리뷰로 진행할 수 있습니다.
+> 💡 **Gemini API**: https://ai.google.dev/ → "Get API Key" (무료)
+> - Issue 생성 시 자동으로 OpenAPI/DB/Policy 명세 생성
+> - PR 시 Spec Drift 자동 체크
+> - 없어도 작동하지만, 명세는 수동 작성 필요
+>
+> 💡 **ChatGPT API**: OpenAI에서 발급 (유료)
+> - 없으면 수동 리뷰로 진행
 
 ---
 
@@ -69,9 +77,49 @@ TEMPLATE-codex-ui.md          # Codex UI 개발용
 
 ---
 
-## 🚀 첫 번째 작업 시작 (5분)
+## 🚀 첫 번째 작업 시작 (2분!)
 
 ### Example: 사용자 프로필 기능 추가
+
+**방법 A: `/new-feature` 슬래시 커맨드 사용 (권장, 2분)**
+
+#### Claude Code 세션에서:
+
+```
+사용자: /new-feature
+
+Claude Code: 어떤 기능을 구현할까요?
+
+사용자:
+Feature name: User Profile
+Description: 사용자가 프로필 정보(이름, 이메일, 바이오)를 보고 수정할 수 있고,
+프로필 사진을 업로드하고, 비밀번호를 변경할 수 있는 기능
+Priority: P2
+Complexity: Medium
+
+Claude Code:
+✅ GitHub Issue #11 생성 완료
+⏳ Gemini가 명세를 생성 중입니다... (2-3분)
+   [또는 Gemini API 미설정 시: 제가 명세를 작성하겠습니다]
+⏳ 명세 작성 완료, 구현을 시작합니다...
+⏳ 백엔드 API 구현 중...
+⏳ PR #25 생성 완료!
+
+👉 명세 PR과 구현 PR을 검토 후 승인해주세요.
+```
+
+**사용자 개입:**
+- ✅ 초기 요청: 2분
+- ✅ 명세 PR 승인: 3분 (나중에)
+- ✅ 구현 PR 승인: 3분 (나중에)
+- **총: 8분**
+
+---
+
+**방법 B: 수동 Issue + 프롬프트 생성 (기존 방식, 10-15분)**
+
+<details>
+<summary>클릭하여 기존 방식 보기</summary>
 
 #### Step 1: GitHub Issue 생성 (1분)
 
@@ -99,8 +147,6 @@ High
 
 **Labels**: `enhancement`, `feature`
 **Create issue** → Issue #11 생성됨
-
----
 
 #### Step 2: 프롬프트 파일 생성 (3분)
 
@@ -252,9 +298,17 @@ Claude Inbox 이슈 (#10)에 코멘트 추가:
 @claude-code @codex please process these prompts in order.
 ```
 
+</details>
+
+---
+
+**권장**: 대부분의 경우 `/new-feature` 방법 A를 사용하세요. 수동 방식은 복잡한 커스터마이징이 필요할 때만 사용합니다.
+
 ---
 
 ## 🤖 LLM들이 작업 시작 (자동, 4-6시간)
+
+> **Note**: `/new-feature` 사용 시 이 과정은 Claude Code가 자동으로 처리합니다!
 
 ### Claude Code 작업 (4시간)
 
