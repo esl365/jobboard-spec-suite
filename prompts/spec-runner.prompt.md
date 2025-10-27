@@ -118,7 +118,66 @@ Using src/payments/registry.ts and adapters/mock.ts as contracts, create src/pay
 Implement Postgres repos for orders/idempotency/webhook_events/ledger following migrations/20251025_0001_payments.sql. Keep transactions in a single unit. Provide Vitest integration tests replacing in-memory repos.
 ```
 
-## 7) What to do if context diverges in the new chat
+## 7) New Features & Issue Creation — `/new-feature` automation
+
+**When the user requests a new feature**, you can handle the **entire workflow** automatically:
+
+```
+User: "I need user login functionality"
+You: Use the /new-feature slash command workflow:
+     1. Gather requirements (interactive, 2min)
+     2. Create GitHub Issue with gh CLI
+     3. Wait for Gemini spec generation (if API configured)
+        OR write specs yourself (OpenAPI/DB/Policy)
+     4. Implement the feature
+     5. Create PR
+     6. Report completion to user
+```
+
+**Key workflow:**
+- Use `gh issue create` to generate well-structured GitHub Issues
+- Include acceptance criteria, technical scope, estimated time
+- Link the issue number to your implementation branch
+- If `GEMINI_API_KEY` is configured, wait 2-3min for automated spec generation
+- If not configured, write specs manually following existing patterns
+
+**See**: `.claude/commands/new-feature.md` for the complete automation guide.
+
+---
+
+## 8) Claude Inbox — Prompt Queue automation
+For systematic prompt processing, use the **Claude Inbox** workflow:
+
+**Subscribe to Claude Inbox:**
+1. Check the Claude Inbox issue for the "Open Claude prompts" list
+2. Process the **lowest numbered** prompt first: `prompts/P{number}-claude-{description}.md`
+3. Execute the prompt according to instructions
+4. Mark complete by adding a `## DONE (YYYY-MM-DD)` section with summary, changes, evidence (PR/commit links), and notes
+
+**Example workflow:**
+```
+# Check inbox, find P0005-claude-implement-search.md
+# Create branch: claude/prompt-0005-search
+# Implement per prompt instructions
+# Add to prompt file:
+## DONE (2025-10-26)
+Summary: Implemented search API with filters
+Changes: Added GET /search endpoint, tests, OpenAPI spec
+Evidence: PR #42, commit abc123f
+Notes: Integrated with existing pagination system
+```
+
+**Key points:**
+- Each prompt file is standalone with Context, Task, Success Criteria, Related sections
+- Always process lowest numbered prompt (FIFO queue)
+- The `## DONE` section provides full traceability
+- Automation scans for completed prompts and updates the Inbox issue
+
+See `docs/PROMPT_QUEUE_AUTOMATION.md` for the complete guide.
+
+---
+
+## 9) What to do if context diverges in the new chat
 - Ask the model to **quote** its assumptions and compare against this repo.
 - Instruct it to open or update `specs/SPEC_GAPS.md` first, then propose patches.
 
