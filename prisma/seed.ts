@@ -558,7 +558,7 @@ async function main() {
         company: {
           connect: { id: companyUserId },
         },
-      },
+      } as any,
     });
     createdJobs.push(job);
   }
