@@ -15,9 +15,11 @@
  * - ISSUE_BODY: Issue description
  */
 
-import { writeFile } from 'fs/promises';
+import { writeFile, mkdir } from 'fs/promises';
 
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+// Use gemini-1.5-flash for fast, cost-effective analysis
+// Alternative: gemini-1.5-pro for more complex reasoning
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
 
 /**
  * Gemini API 호출
@@ -144,6 +146,9 @@ Format the response as structured Markdown.`;
  * 명세 파일 생성
  */
 async function generateSpecFiles(analysis, issueNumber) {
+  // spec-updates 디렉토리 생성
+  await mkdir('spec-updates', { recursive: true });
+
   // OpenAPI 추출
   const openapiMatch = analysis.match(/```yaml\n([\s\S]*?)\n```/);
   if (openapiMatch) {

@@ -247,6 +247,11 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          PR_NUMBER: ${{ github.event.issue.pull_request && github.event.pull_request.number || '' }}
+          PR_TITLE: ${{ github.event.issue.pull_request && github.event.pull_request.title || '' }}
         run: |
           if [ "${{ github.event.issue.pull_request }}" ]; then
             echo "Analyzing PR..."
