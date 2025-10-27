@@ -8,6 +8,7 @@ import { ApplicationModule } from './modules/application/application.module';
 import { PaymentModule } from './modules/payment/payment.module';
 import { ResumeModule } from './modules/resume/resume.module';
 import { SearchModule } from './modules/search/search.module';
+import { AdminModule } from './modules/admin/admin.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { SearchModule } from './modules/search/search.module';
     PaymentModule,
     ResumeModule,
     SearchModule,
+    AdminModule,
     // UsersModule,
   ],
   controllers: [AppController],
