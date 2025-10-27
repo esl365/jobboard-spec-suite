@@ -550,8 +550,15 @@ async function main() {
 
   const createdJobs = [];
   for (const jobData of jobs) {
+    const { companyUserId, skills, ...rest } = jobData;
     const job = await prisma.job.create({
-      data: jobData,
+      data: {
+        ...rest,
+        skills: skills ? JSON.stringify(skills) : null,
+        company: {
+          connect: { id: companyUserId },
+        },
+      },
     });
     createdJobs.push(job);
   }
