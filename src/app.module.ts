@@ -11,6 +11,7 @@ import { PaymentModule } from './modules/payment/payment.module';
 import { ResumeModule } from './modules/resume/resume.module';
 import { SearchModule } from './modules/search/search.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { BookmarkModule } from './modules/bookmark/bookmark.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { AdminModule } from './modules/admin/admin.module';
     ResumeModule,
     SearchModule,
     AdminModule,
+    BookmarkModule,
     // UsersModule,
   ],
   controllers: [AppController],

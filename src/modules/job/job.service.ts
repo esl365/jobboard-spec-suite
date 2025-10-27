@@ -224,6 +224,16 @@ export class JobService {
   }
 
   private mapToResponseDto(job: any): JobResponseDto {
+    // Parse skills from JSON string if present
+    let skills: string[] | undefined;
+    if (job.skills) {
+      try {
+        skills = JSON.parse(job.skills);
+      } catch {
+        skills = undefined;
+      }
+    }
+
     return {
       id: Number(job.id),
       title: job.title,
@@ -233,6 +243,9 @@ export class JobService {
       salaryType: job.salaryType,
       salaryMin: job.salaryMin ? Number(job.salaryMin) : undefined,
       salaryMax: job.salaryMax ? Number(job.salaryMax) : undefined,
+      location: job.location,
+      remote: job.remote,
+      skills,
       locationSiIdx: job.locationSiIdx,
       locationGuIdx: job.locationGuIdx,
       jobTypeIdx: job.jobTypeIdx,
@@ -244,6 +257,7 @@ export class JobService {
             id: Number(job.company.id),
             email: job.company.email,
             companyName: job.company.companyProfile?.companyName,
+            logoUrl: job.company.companyProfile?.logoUrl,
           }
         : undefined,
     };

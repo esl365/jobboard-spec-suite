@@ -38,6 +38,7 @@ model User {
   pointTransactions PointTransaction[]
   savedSearches   SavedSearch[]
   searchHistory   SearchHistory[]
+  bookmarks       Bookmark[]
 
   @@map("users")
 }
@@ -73,6 +74,7 @@ model UserCompanyProfile {
   companyAddress             String? @map("company_address") @db.Text
   managerName                String? @map("manager_name") @db.VarChar(100)
   managerContact             String? @map("manager_contact") @db.VarChar(20)
+  logoUrl                    String? @map("logo_url") @db.VarChar(500)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -149,6 +151,9 @@ model Job {
   salaryType      SalaryType? @map("salary_type")
   salaryMin       Decimal?    @map("salary_min") @db.Decimal(15, 2)
   salaryMax       Decimal?    @map("salary_max") @db.Decimal(15, 2)
+  location        String?     @db.VarChar(255)
+  remote          Boolean     @default(false)
+  skills          String?     @db.Text
   locationSiIdx   Int?        @map("location_si_idx")
   locationGuIdx   Int?        @map("location_gu_idx")
   jobTypeIdx      Int?        @map("job_type_idx")
@@ -159,9 +164,12 @@ model Job {
   company      User             @relation("CompanyJobs", fields: [companyUserId], references: [id], onDelete: Cascade)
   jobOptions   JobOption?
   applications JobApplication[]
+  bookmarks    Bookmark[]
 
   @@index([status])
   @@index([expiresAt])
+  @@index([location])
+  @@index([remote])
   @@map("jobs")
 }
 
@@ -338,4 +346,23 @@ model SearchHistory {
 
   @@index([userId, searchedAt])
   @@map("search_history")
+}
+
+// =================================================================
+// Section 4: Bookmarks
+// =================================================================
+
+model Bookmark {
+  id        BigInt   @id @default(autoincrement()) @map("bookmark_id") @db.UnsignedBigInt
+  userId    BigInt   @map("user_id") @db.UnsignedBigInt
+  jobId     BigInt   @map("job_id") @db.UnsignedBigInt
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job  Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, jobId])
+  @@index([userId])
+  @@index([jobId])
+  @@map("bookmarks")
 }
