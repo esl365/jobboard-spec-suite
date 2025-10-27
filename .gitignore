@@ -3,6 +3,7 @@ dist/
 coverage/
 .env
 .env.*
+!.env.example
 .DS_Store
 *.log
 .vscode/
@@ -10,3 +11,15 @@ coverage/
 
 _check/
 *.zip
+
+# Prisma
+prisma/*.db
+prisma/*.db-journal
+
+# Testing
+test-results/
+playwright-report/
+
+# Build
+build/
+*.tsbuildinfo
