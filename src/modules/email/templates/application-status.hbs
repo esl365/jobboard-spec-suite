@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>지원 상태 업데이트</title>
+  <style>
+    body {
+      font-family: 'Malgun Gothic', '맑은 고딕', Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+      border-radius: 10px 10px 0 0;
+    }
+    .content {
+      background: #f9f9f9;
+      padding: 30px;
+      border-radius: 0 0 10px 10px;
+    }
+    .status-box {
+      background: white;
+      border-left: 4px solid #667eea;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 5px;
+    }
+    .button {
+      display: inline-block;
+      padding: 12px 30px;
+      background: #667eea;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      margin: 20px 0;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 12px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>📢 지원 상태 업데이트</h1>
+  </div>
+  <div class="content">
+    <p>안녕하세요!</p>
+
+    <p>지원하신 채용 공고의 상태가 업데이트되었습니다.</p>
+
+    <div class="status-box">
+      <p><strong>회사명:</strong> {{companyName}}</p>
+      <p><strong>포지션:</strong> {{jobTitle}}</p>
+      <p><strong>상태:</strong> <span style="color: #667eea; font-weight: bold;">{{status}}</span></p>
+    </div>
+
+    <p>지원 현황 및 상세 정보는 대시보드에서 확인하실 수 있습니다.</p>
+
+    <center>
+      <a href="{{dashboardUrl}}" class="button">대시보드 보기</a>
+    </center>
+
+    <p>감사합니다.<br>잡보드 팀 드림</p>
+  </div>
+  <div class="footer">
+    <p>© {{year}} 잡보드. All rights reserved.</p>
+    <p>지원 상태 변경 시 자동 발송되는 알림입니다.</p>
+  </div>
+</body>
+</html>

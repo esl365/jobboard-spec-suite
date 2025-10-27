@@ -9,9 +9,11 @@ import { RedisService } from './services/redis.service';
 import { DeviceSessionService } from './services/device-session.service';
 import { RolesGuard } from './guards/roles.guard';
 import { PrismaService } from '../../common/prisma.service';
+import { EmailModule } from '../email/email.module';
 
 @Module({
   imports: [
+    EmailModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
