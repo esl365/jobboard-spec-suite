@@ -88,6 +88,15 @@ export class JobService {
       where.OR = [{ title: { contains: search } }, { description: { contains: search } }];
     }
 
+    // Salary range filtering
+    if (query.salaryMin !== undefined) {
+      where.salaryMin = { gte: query.salaryMin };
+    }
+
+    if (query.salaryMax !== undefined) {
+      where.salaryMax = { lte: query.salaryMax };
+    }
+
     // Build orderBy clause
     const orderBy: any = {
       [sortBy]: sortOrder,

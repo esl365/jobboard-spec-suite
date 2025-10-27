@@ -58,14 +58,26 @@ export class JobListQueryDto {
   @IsString()
   search?: string;
 
+  @ApiPropertyOptional({ example: 30000, description: 'Minimum salary' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  salaryMin?: number;
+
+  @ApiPropertyOptional({ example: 80000, description: 'Maximum salary' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  salaryMax?: number;
+
   @ApiPropertyOptional({
     example: 'createdAt',
-    enum: ['createdAt', 'updatedAt', 'expiresAt', 'title'],
+    enum: ['createdAt', 'updatedAt', 'expiresAt', 'title', 'salaryMin'],
     default: 'createdAt',
   })
   @IsOptional()
-  @IsEnum(['createdAt', 'updatedAt', 'expiresAt', 'title'])
-  sortBy?: 'createdAt' | 'updatedAt' | 'expiresAt' | 'title' = 'createdAt';
+  @IsEnum(['createdAt', 'updatedAt', 'expiresAt', 'title', 'salaryMin'])
+  sortBy?: 'createdAt' | 'updatedAt' | 'expiresAt' | 'title' | 'salaryMin' = 'createdAt';
 
   @ApiPropertyOptional({ example: 'desc', enum: ['asc', 'desc'], default: 'desc' })
   @IsOptional()

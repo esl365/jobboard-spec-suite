@@ -7,6 +7,7 @@ import { JobModule } from './modules/job/job.module';
 import { ApplicationModule } from './modules/application/application.module';
 import { PaymentModule } from './modules/payment/payment.module';
 import { ResumeModule } from './modules/resume/resume.module';
+import { SearchModule } from './modules/search/search.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { ResumeModule } from './modules/resume/resume.module';
     ApplicationModule,
     PaymentModule,
     ResumeModule,
+    SearchModule,
     // UsersModule,
   ],
   controllers: [AppController],
