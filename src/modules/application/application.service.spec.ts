@@ -7,14 +7,21 @@ import {
 } from '@nestjs/common';
 import { ApplicationService } from './application.service';
 import { PrismaService } from '../../common/prisma.service';
+import { EmailService } from '../email/email.service';
 import { mockDeep, DeepMockProxy } from 'jest-mock-extended';
 
 describe('ApplicationService', () => {
   let service: ApplicationService;
   let prismaMock: DeepMockProxy<PrismaService>;
+  let emailServiceMock: DeepMockProxy<EmailService>;
 
   beforeEach(async () => {
     prismaMock = mockDeep<PrismaService>();
+    emailServiceMock = mockDeep<EmailService>();
+
+    // Mock email service methods to return resolved promises
+    emailServiceMock.sendApplicationReceivedEmail.mockResolvedValue(true);
+    emailServiceMock.sendApplicationStatusEmail.mockResolvedValue(true);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -22,6 +29,10 @@ describe('ApplicationService', () => {
         {
           provide: PrismaService,
           useValue: prismaMock,
+        },
+        {
+          provide: EmailService,
+          useValue: emailServiceMock,
         },
       ],
     }).compile();

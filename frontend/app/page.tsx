@@ -10,16 +10,22 @@ export default function Home() {
         <p className="text-xl mb-8 text-center text-gray-600">
           Fast, transparent, and affordable job matching
         </p>
-        <div className="flex gap-4 justify-center">
+        <div className="flex gap-4 justify-center flex-wrap">
+          <Link
+            href="/register"
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+          >
+            Get Started
+          </Link>
           <Link
             href="/login"
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            className="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition"
           >
             Sign In
           </Link>
           <Link
             href="/jobs"
-            className="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition"
+            className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:border-gray-400 transition"
           >
             Browse Jobs
           </Link>
