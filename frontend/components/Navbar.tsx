@@ -14,14 +14,23 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="bg-white shadow-sm border-b">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo / Brand */}
-          <div className="flex items-center">
-            <Link href="/" className="flex items-center">
-              <span className="text-2xl font-bold text-blue-600">JobBoard</span>
-            </Link>
+    <>
+      {/* Skip to main content link for keyboard navigation */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-blue-600 focus:text-white focus:rounded"
+      >
+        Skip to main content
+      </a>
+
+      <nav className="bg-white shadow-sm border-b" role="navigation" aria-label="Main navigation">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            {/* Logo / Brand */}
+            <div className="flex items-center">
+              <Link href="/" className="flex items-center" aria-label="JobBoard home">
+                <span className="text-2xl font-bold text-blue-600">JobBoard</span>
+              </Link>
 
             {/* Main Navigation */}
             <div className="hidden md:flex ml-10 space-x-4">
@@ -51,18 +60,23 @@ export default function Navbar() {
           </div>
 
           {/* Right side - Auth buttons */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3" role="navigation" aria-label="User navigation">
             {isAuthenticated ? (
               <>
-                <span className="text-sm text-gray-600 hidden sm:block">
+                <span className="text-sm text-gray-600 hidden sm:block" aria-label={`Logged in as ${user?.email}`}>
                   {user?.email}
                 </span>
-                <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-medium">
+                <span
+                  className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-medium"
+                  role="status"
+                  aria-label={`Account type: ${user?.userType === 'COMPANY' ? 'Company' : 'Job Seeker'}`}
+                >
                   {user?.userType === 'COMPANY' ? 'Company' : 'Job Seeker'}
                 </span>
                 <button
                   onClick={handleLogout}
                   className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition"
+                  aria-label={`Logout from ${user?.email}`}
                 >
                   Logout
                 </button>
@@ -89,7 +103,7 @@ export default function Navbar() {
 
       {/* Mobile Navigation */}
       {isAuthenticated && (
-        <div className="md:hidden border-t px-4 py-3">
+        <div className="md:hidden border-t px-4 py-3" role="navigation" aria-label="Mobile navigation">
           <Link
             href="/jobs"
             className="block px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
@@ -113,5 +127,6 @@ export default function Navbar() {
         </div>
       )}
     </nav>
+    </>
   );
 }

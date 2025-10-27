@@ -186,6 +186,8 @@ export default function RegisterPage() {
             <input
               id="email"
               type="email"
+              autoComplete="email"
+              inputMode="email"
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
@@ -216,6 +218,7 @@ export default function RegisterPage() {
               <input
                 id="password"
                 type={showPassword ? 'text' : 'password'}
+                autoComplete="new-password"
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);
@@ -269,6 +272,7 @@ export default function RegisterPage() {
               <input
                 id="confirmPassword"
                 type={showConfirmPassword ? 'text' : 'password'}
+                autoComplete="new-password"
                 value={confirmPassword}
                 onChange={(e) => {
                   setConfirmPassword(e.target.value);
