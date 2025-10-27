@@ -102,6 +102,22 @@ class ApiClient {
     const { data } = await this.client.get('/admin/dashboard');
     return data;
   }
+
+  // Bookmarks
+  async toggleBookmark(jobId: number) {
+    const { data } = await this.client.post(`/bookmarks/${jobId}`);
+    return data;
+  }
+
+  async getMyBookmarks() {
+    const { data } = await this.client.get('/bookmarks');
+    return data;
+  }
+
+  async checkBookmark(jobId: number) {
+    const { data } = await this.client.get(`/bookmarks/check/${jobId}`);
+    return data;
+  }
 }
 
 export const apiClient = new ApiClient();

@@ -9,6 +9,9 @@ export class JobCompanyDto {
 
   @ApiPropertyOptional({ example: 'Acme Corporation' })
   companyName?: string;
+
+  @ApiPropertyOptional({ example: 'https://example.com/logo.png' })
+  logoUrl?: string;
 }
 
 export class JobResponseDto {
@@ -38,6 +41,18 @@ export class JobResponseDto {
 
   @ApiPropertyOptional({ example: 80000 })
   salaryMax?: number;
+
+  @ApiPropertyOptional({ example: 'Seoul, South Korea' })
+  location?: string;
+
+  @ApiPropertyOptional({ example: false })
+  remote?: boolean;
+
+  @ApiPropertyOptional({
+    example: ['React', 'TypeScript', 'Node.js'],
+    type: [String]
+  })
+  skills?: string[];
 
   @ApiPropertyOptional({ example: 1 })
   locationSiIdx?: number;

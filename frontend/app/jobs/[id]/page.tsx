@@ -5,6 +5,8 @@ import { useRouter, useParams } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
 import { useAuthStore } from '@/store/auth-store';
 import Link from 'next/link';
+import BookmarkButton from '@/components/BookmarkButton';
+import ShareButton from '@/components/ShareButton';
 
 interface Job {
   id: number;
@@ -104,22 +106,26 @@ export default function JobDetailPage() {
           {/* Header */}
           <div className="border-b pb-6 mb-6">
             <div className="flex justify-between items-start mb-4">
-              <div>
+              <div className="flex-1">
                 <h1 className="text-3xl font-bold mb-2">{job.title}</h1>
                 <p className="text-lg text-gray-600">
                   {job.company?.companyProfile?.companyName || job.company?.email}
                 </p>
               </div>
-              {job.status === 'ACTIVE' && !isExpired && (
-                <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-                  Active
-                </span>
-              )}
-              {isExpired && (
-                <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm font-medium">
-                  Expired
-                </span>
-              )}
+              <div className="flex items-center gap-3">
+                <ShareButton jobId={job.id} jobTitle={job.title} size="lg" />
+                {!isOwner && <BookmarkButton jobId={job.id} size="lg" />}
+                {job.status === 'ACTIVE' && !isExpired && (
+                  <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                    Active
+                  </span>
+                )}
+                {isExpired && (
+                  <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm font-medium">
+                    Expired
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Meta Info */}

@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { apiClient } from '@/lib/api-client';
+import { getRelativeTime, formatDeadline } from '@/lib/date-utils';
 import Link from 'next/link';
+import Image from 'next/image';
+import BookmarkButton from '@/components/BookmarkButton';
+import ShareButton from '@/components/ShareButton';
 
 interface Job {
   id: number;
@@ -12,15 +16,17 @@ interface Job {
   salaryMin?: number;
   salaryMax?: number;
   salaryType?: string;
+  location?: string;
+  remote?: boolean;
+  skills?: string[];
   status: string;
   createdAt: string;
   expiresAt: string;
   company?: {
     id: number;
     email: string;
-    companyProfile?: {
-      companyName: string;
-    };
+    companyName?: string;
+    logoUrl?: string;
   };
 }
 
@@ -28,14 +34,18 @@ export default function JobsPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchInput, setSearchInput] = useState('');
 
   useEffect(() => {
     loadJobs();
-  }, []);
+  }, [searchQuery]);
 
   const loadJobs = async () => {
+    setLoading(true);
     try {
-      const data = await apiClient.getJobs();
+      const params = searchQuery ? { search: searchQuery } : {};
+      const data = await apiClient.getJobs(params);
       setJobs(data.jobs || []);
     } catch (err: any) {
       setError('Failed to load jobs');
@@ -43,6 +53,16 @@ export default function JobsPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSearchQuery(searchInput);
+  };
+
+  const handleClearSearch = () => {
+    setSearchInput('');
+    setSearchQuery('');
   };
 
   if (loading) {
@@ -69,13 +89,63 @@ export default function JobsPage() {
           </p>
         </div>
 
+        {/* Search Form */}
+        <form onSubmit={handleSearch} className="mb-6">
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <input
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="Search jobs by title, company, or description..."
+                className="w-full px-4 py-3 pl-11 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              />
+              <svg
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </div>
+            <button
+              type="submit"
+              className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Search
+            </button>
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={handleClearSearch}
+                className="px-4 py-3 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          {searchQuery && (
+            <div className="mt-3 flex items-center gap-2">
+              <span className="text-sm text-gray-600">
+                Searching for: <span className="font-semibold text-gray-900">"{searchQuery}"</span>
+              </span>
+            </div>
+          )}
+        </form>
+
         {error && (
           <div className="bg-red-50 text-red-600 p-4 rounded-lg mb-6">
             {error}
           </div>
         )}
 
-        {/* Jobs Grid */}
+        {/* Jobs List */}
         {jobs.length === 0 ? (
           <div className="bg-white rounded-lg shadow p-12 text-center">
             <svg
@@ -97,91 +167,133 @@ export default function JobsPage() {
             </p>
           </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="space-y-4">
             {jobs.map((job) => {
               const isExpired = new Date(job.expiresAt) < new Date();
-              const companyName =
-                job.company?.companyProfile?.companyName || job.company?.email || 'Unknown Company';
+              const companyName = job.company?.companyName || job.company?.email || 'Unknown Company';
+              const deadline = formatDeadline(job.expiresAt);
 
               return (
-                <Link
+                <div
                   key={job.id}
-                  href={`/jobs/${job.id}`}
-                  className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow duration-200 overflow-hidden flex flex-col"
+                  className="relative block bg-white rounded-lg border border-gray-200 hover:border-blue-500 hover:shadow-md transition-all duration-200"
                 >
-                  <div className="p-6 flex-1">
-                    {/* Title */}
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2 hover:text-blue-600 transition-colors">
-                      {job.title}
-                    </h3>
+                  {/* Action Buttons - Absolute positioned */}
+                  <div className="absolute top-4 right-4 z-10 flex gap-2">
+                    <ShareButton jobId={job.id} jobTitle={job.title} size="md" />
+                    <BookmarkButton jobId={job.id} size="md" />
+                  </div>
 
-                    {/* Company */}
-                    <p className="text-gray-600 text-sm mb-3">{companyName}</p>
-
-                    {/* Description */}
-                    <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-                      {job.description}
-                    </p>
-
-                    {/* Job Details */}
-                    <div className="space-y-2 mb-4">
-                      {job.employmentType && (
-                        <div className="flex items-center text-sm text-gray-500">
-                          <svg
-                            className="w-4 h-4 mr-2"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  <Link href={`/jobs/${job.id}`} className="block">
+                    <div className="p-6 pr-16">
+                      <div className="flex gap-4">
+                        {/* Company Logo */}
+                        <div className="flex-shrink-0">
+                        {job.company?.logoUrl ? (
+                          <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
+                            <Image
+                              src={job.company.logoUrl}
+                              alt={`${companyName} logo`}
+                              fill
+                              className="object-cover"
                             />
-                          </svg>
-                          {job.employmentType}
-                        </div>
-                      )}
+                          </div>
+                        ) : (
+                          <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                            <span className="text-white text-xl font-bold">
+                              {companyName.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                        )}
+                      </div>
 
-                      {job.salaryMin && job.salaryMax && (
-                        <div className="flex items-center text-sm font-medium text-green-600">
-                          <svg
-                            className="w-4 h-4 mr-2"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                          </svg>
-                          ₩{job.salaryMin.toLocaleString()} - ₩{job.salaryMax.toLocaleString()}
-                          {job.salaryType && ` (${job.salaryType})`}
+                      {/* Job Info */}
+                      <div className="flex-1 min-w-0">
+                        {/* Title and Company */}
+                        <h3 className="text-xl font-bold text-gray-900 mb-1 hover:text-blue-600 transition-colors">
+                          {job.title}
+                        </h3>
+                        <p className="text-gray-600 mb-3">{companyName}</p>
+
+                        {/* Location and Remote */}
+                        <div className="flex flex-wrap items-center gap-3 mb-3">
+                          {job.location && (
+                            <span className="inline-flex items-center text-sm text-gray-600">
+                              <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                              </svg>
+                              {job.location}
+                            </span>
+                          )}
+                          {job.remote && (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              Remote OK
+                            </span>
+                          )}
                         </div>
-                      )}
+
+                        {/* Salary and Employment Type */}
+                        <div className="flex flex-wrap items-center gap-4 mb-3">
+                          {job.salaryMin && job.salaryMax && (
+                            <span className="inline-flex items-center text-sm font-semibold text-green-600">
+                              <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              ₩{job.salaryMin.toLocaleString()} - ₩{job.salaryMax.toLocaleString()}
+                              {job.salaryType && <span className="text-gray-500 ml-1">/ {job.salaryType.toLowerCase()}</span>}
+                            </span>
+                          )}
+                          {job.employmentType && (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              {job.employmentType}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Skills */}
+                        {job.skills && job.skills.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mb-3">
+                            {job.skills.slice(0, 5).map((skill, index) => (
+                              <span
+                                key={index}
+                                className="inline-block px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded border border-gray-200"
+                              >
+                                {skill}
+                              </span>
+                            ))}
+                            {job.skills.length > 5 && (
+                              <span className="inline-block px-2 py-1 text-gray-500 text-xs">
+                                +{job.skills.length - 5} more
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Footer */}
+                        <div className="flex items-center justify-between text-sm text-gray-500 pt-3 border-t border-gray-100">
+                          <span>{getRelativeTime(job.createdAt)}</span>
+                          <div className="flex items-center gap-3">
+                            {isExpired ? (
+                              <span className="px-2 py-1 bg-gray-200 text-gray-600 rounded text-xs font-medium">
+                                Expired
+                              </span>
+                            ) : deadline.startsWith('D-') && parseInt(deadline.split('-')[1]) <= 7 ? (
+                              <span className="px-2 py-1 bg-orange-100 text-orange-800 rounded text-xs font-medium">
+                                {deadline} (Closing Soon)
+                              </span>
+                            ) : (
+                              <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-medium">
+                                {deadline}
+                              </span>
+                            )}
+                          </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-
-                  {/* Footer */}
-                  <div className="px-6 py-4 bg-gray-50 border-t flex justify-between items-center">
-                    <span className="text-xs text-gray-500">
-                      Posted {new Date(job.createdAt).toLocaleDateString()}
-                    </span>
-                    {isExpired ? (
-                      <span className="px-2 py-1 bg-gray-200 text-gray-600 rounded text-xs font-medium">
-                        Expired
-                      </span>
-                    ) : (
-                      <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-medium">
-                        Active
-                      </span>
-                    )}
-                  </div>
-                </Link>
+                  </Link>
+                </div>
               );
             })}
           </div>
