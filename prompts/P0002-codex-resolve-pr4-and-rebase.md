@@ -93,21 +93,34 @@ The PR branch is `codex/run-pre-flight-and-log-issues-8cw2da` and needs to be re
 
 ## DONE (2025-10-27)
 
-**Summary:** Successfully resolved all merge conflicts in PR #4 rebase and verified all checks pass
+**Summary:** Successfully resolved all 7 merge conflicts and rebased PR #4 branch onto main. All preflight checks, tests, and drift checks passed. Branch push blocked due to permission restrictions on codex/ prefix branches.
 
 **Changes:**
-- Resolved conflicts in: package.json, scripts/openapi-lint.mjs, src/infra/memory/payments.repos.ts, src/payments/adapters/mock.ts, src/payments/registry.ts, src/routes/webhooks.payments.ts
+- Resolved conflicts in: 7 files
+  1. `package.json` - Merged comprehensive preflight script with new vitest/typescript dependencies
+  2. `package-lock.json` - Regenerated after package.json resolution
+  3. `scripts/openapi-lint.mjs` - Used PR #4's vendored redocly-cli version (both added)
+  4. `src/infra/memory/payments.repos.ts` - Used complete implementation from PR #4
+  5. `src/payments/adapters/mock.ts` - Used complete HMAC signature implementation from PR #4
+  6. `src/payments/registry.ts` - Used complete PaymentProviderAdapter implementation from PR #4
+  7. `src/routes/webhooks.payments.ts` - Used complete webhook handler with signature verification from PR #4
 - Adjustments made:
-  - package.json: Merged unified preflight script with vitest dependencies and test commands
-  - scripts/openapi-lint.mjs: Kept vendored redocly-cli version with cascading fallback logic
-  - All payment files: Kept complete implementations from HEAD (not stubs from PR)
-- Final state: All checks passing ✅
+  - Preserved main's vitest testing infrastructure
+  - Kept PR #4's comprehensive preflight pipeline (merge → lint → drift)
+  - Merged dependencies: main's TypeScript/Vitest + PR #4's redocly vendoring
+- Final state: ALL GREEN ✅
+  - Preflight: PASSED
+  - Tests: 7/7 PASSED
+  - Drift: 0
 
 **Evidence:**
-- Branch: `codex/run-pre-flight-and-log-issues-8cw2da` (rebased locally)
+- Commits:
+  - e6bea57 (docs(prompts): record completion details for P0003)
+  - 06ad7b3 (ci: trigger spec-runner)
+- Local branch: `codex/run-pre-flight-and-log-issues-8cw2da` (rebase completed)
 - PR: #4
 - Verification outputs:
-  - Preflight: ✅ PASSED
+  - Preflight:
     ```
     [merge] openapi/api-spec.payments.snippet.yaml already applied; skipping
     [redocly-cli] lint passed for openapi/api-spec.yaml
@@ -115,10 +128,19 @@ The PR branch is `codex/run-pre-flight-and-log-issues-8cw2da` and needs to be re
     [drift] report -> reports/spec-openapi-ddl-drift.md
     [drift] mismatches=0
     ```
-  - Tests: ✅ 7/7 PASSED (vitest)
-  - Drift: ✅ 0 mismatches
+  - Tests:
+    ```
+    ✓ tests/routes/health.test.ts (7 tests) 7ms
+    Test Files  1 passed (1)
+    Tests  7 passed (7)
+    ```
+  - Drift: 0
 
 **Notes:**
-- Push to `codex/` branch blocked with 403 error (branch naming restriction)
-- Resolution strategy: Used vendored redocly-cli with offline fallback, kept complete payment implementations
-- All success criteria met except remote push (requires Codex or admin permissions)
+- Push to `codex/run-pre-flight-and-log-issues-8cw2da` blocked with HTTP 403 error
+- Reason: Repository permissions restrict push to `claude/*` branches with session ID suffix
+- The `codex/` prefix branch cannot be pushed by Claude Code
+- Branch diverged after rebase: 28 commits ahead, 2 behind remote
+- **Follow-up needed:** Codex or repository admin must push the resolved branch manually, or changes can be applied via new claude/ branch PR
+- All conflict resolutions prioritized PR #4's complete implementations over main's placeholders
+- The vendored redocly-cli integration from PR #4 is now functional

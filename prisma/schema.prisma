@@ -1,0 +1,340 @@
+// Prisma Schema for Job Board API
+// Generated from db/schema.sql (MySQL)
+// Phase 0 Week 1: Core tables only
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// =================================================================
+// Section 1: Users & Authentication (RBAC)
+// =================================================================
+
+model User {
+  id            BigInt   @id @default(autoincrement()) @map("user_id") @db.UnsignedBigInt
+  email         String   @unique @db.VarChar(255)
+  passwordHash  String   @map("password_hash") @db.VarChar(255)
+  userType      UserType @map("user_type")
+  status        UserStatus @default(PENDING_VERIFICATION)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  lastLoginAt   DateTime? @map("last_login_at")
+
+  // Relations
+  personalProfile UserPersonalProfile?
+  companyProfile  UserCompanyProfile?
+  wallet          UserWallet?
+  userRoles       UserRole[]
+  jobs            Job[] @relation("CompanyJobs")
+  resumes         Resume[]
+  applications    JobApplication[]
+  applicationStages JobApplicationStage[]
+  orders          Order[]
+  pointTransactions PointTransaction[]
+  savedSearches   SavedSearch[]
+  searchHistory   SearchHistory[]
+
+  @@map("users")
+}
+
+enum UserType {
+  PERSONAL
+  COMPANY
+  ADMIN
+}
+
+enum UserStatus {
+  PENDING_VERIFICATION
+  ACTIVE
+  DORMANT
+  WITHDRAWN
+}
+
+model UserPersonalProfile {
+  userId         BigInt  @id @map("user_id") @db.UnsignedBigInt
+  username       String  @db.VarChar(100)
+  contactNumber  String? @unique @map("contact_number") @db.VarChar(20)
+  birthdate      DateTime? @db.Date
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_personal_profiles")
+}
+
+model UserCompanyProfile {
+  userId                     BigInt  @id @map("user_id") @db.UnsignedBigInt
+  companyName                String  @map("company_name") @db.VarChar(100)
+  businessRegistrationNumber String  @unique @map("business_registration_number") @db.VarChar(50)
+  companyAddress             String? @map("company_address") @db.Text
+  managerName                String? @map("manager_name") @db.VarChar(100)
+  managerContact             String? @map("manager_contact") @db.VarChar(20)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_company_profiles")
+}
+
+model UserWallet {
+  userId             BigInt   @id @map("user_id") @db.UnsignedBigInt
+  pointsBalance      BigInt   @default(0) @map("points_balance")
+  resumeReadCoupons  Int      @default(0) @map("resume_read_coupons") @db.UnsignedInt
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_wallets")
+}
+
+// =================================================================
+// RBAC Models
+// =================================================================
+
+model Role {
+  id          Int      @id @default(autoincrement()) @map("role_id") @db.UnsignedInt
+  roleName    String   @unique @map("role_name") @db.VarChar(50)
+
+  userRoles   UserRole[]
+  permissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id              Int    @id @default(autoincrement()) @map("permission_id") @db.UnsignedInt
+  permissionName  String @unique @map("permission_name") @db.VarChar(100)
+
+  roles RolePermission[]
+
+  @@map("permissions")
+}
+
+model UserRole {
+  userId BigInt @map("user_id") @db.UnsignedBigInt
+  roleId Int    @map("role_id") @db.UnsignedInt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+model RolePermission {
+  roleId       Int @map("role_id") @db.UnsignedInt
+  permissionId Int @map("permission_id") @db.UnsignedInt
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+// =================================================================
+// Section 2: Job Portal Core
+// =================================================================
+
+model Job {
+  id              BigInt      @id @default(autoincrement()) @map("job_id") @db.UnsignedBigInt
+  companyUserId   BigInt      @map("company_user_id") @db.UnsignedBigInt
+  title           String      @db.VarChar(255)
+  description     String      @db.LongText
+  status          JobStatus   @default(DRAFT)
+  employmentType  String?     @map("employment_type") @db.VarChar(50)
+  salaryType      SalaryType? @map("salary_type")
+  salaryMin       Decimal?    @map("salary_min") @db.Decimal(15, 2)
+  salaryMax       Decimal?    @map("salary_max") @db.Decimal(15, 2)
+  locationSiIdx   Int?        @map("location_si_idx")
+  locationGuIdx   Int?        @map("location_gu_idx")
+  jobTypeIdx      Int?        @map("job_type_idx")
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+  expiresAt       DateTime    @map("expires_at")
+
+  company      User             @relation("CompanyJobs", fields: [companyUserId], references: [id], onDelete: Cascade)
+  jobOptions   JobOption?
+  applications JobApplication[]
+
+  @@index([status])
+  @@index([expiresAt])
+  @@map("jobs")
+}
+
+enum JobStatus {
+  DRAFT
+  PENDING_REVIEW
+  ACTIVE
+  EXPIRED
+  FILLED
+  DELETED
+}
+
+enum SalaryType {
+  HOURLY
+  MONTHLY
+  YEARLY
+}
+
+model JobOption {
+  jobId              BigInt    @id @map("job_id") @db.UnsignedBigInt
+  isPremiumListing   Boolean   @default(false) @map("is_premium_listing")
+  isMainBanner       Boolean   @default(false) @map("is_main_banner")
+  isHotJob           Boolean   @default(false) @map("is_hot_job")
+  optionsExpiresAt   DateTime? @map("options_expires_at")
+
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@map("job_options")
+}
+
+model Resume {
+  id                BigInt   @id @default(autoincrement()) @map("resume_id") @db.UnsignedBigInt
+  jobseekerUserId   BigInt   @map("jobseeker_user_id") @db.UnsignedBigInt
+  title             String   @db.VarChar(255)
+  introduction      String?  @db.Text
+  educationHistory  Json?    @map("education_history")
+  workExperience    Json?    @map("work_experience")
+  skills            Json?
+  filePath          String?  @map("file_path") @db.VarChar(500)
+  isDefault         Boolean  @default(false) @map("is_default")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  jobseeker    User             @relation(fields: [jobseekerUserId], references: [id], onDelete: Cascade)
+  applications JobApplication[]
+
+  @@map("resumes")
+}
+
+model JobApplicationStage {
+  id              BigInt  @id @default(autoincrement()) @map("stage_id") @db.UnsignedBigInt
+  companyUserId   BigInt  @map("company_user_id") @db.UnsignedBigInt
+  stageName       String  @map("stage_name") @db.VarChar(100)
+  stageOrder      Int     @map("stage_order")
+  isDefaultStage  Boolean @default(false) @map("is_default_stage")
+
+  company      User             @relation(fields: [companyUserId], references: [id], onDelete: Cascade)
+  applications JobApplication[]
+
+  @@map("job_application_stages")
+}
+
+model JobApplication {
+  id                BigInt              @id @default(autoincrement()) @map("application_id") @db.UnsignedBigInt
+  jobId             BigInt              @map("job_id") @db.UnsignedBigInt
+  jobseekerUserId   BigInt              @map("jobseeker_user_id") @db.UnsignedBigInt
+  resumeId          BigInt              @map("resume_id") @db.UnsignedBigInt
+  currentStageId    BigInt              @map("current_stage_id") @db.UnsignedBigInt
+  status            ApplicationStatus   @default(ACTIVE)
+  appliedAt         DateTime            @default(now()) @map("applied_at")
+  updatedAt         DateTime            @updatedAt @map("updated_at")
+
+  job          Job                  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  jobseeker    User                 @relation(fields: [jobseekerUserId], references: [id], onDelete: Cascade)
+  resume       Resume               @relation(fields: [resumeId], references: [id])
+  currentStage JobApplicationStage  @relation(fields: [currentStageId], references: [id])
+
+  @@unique([jobId, jobseekerUserId], name: "uk_job_user")
+  @@map("job_applications")
+}
+
+enum ApplicationStatus {
+  ACTIVE
+  WITHDRAWN_BY_USER
+  HIRED
+  REJECTED_BY_COMPANY
+}
+
+// =================================================================
+// Section 3: Payment & Products
+// =================================================================
+
+model ProductPackage {
+  id          Int     @id @default(autoincrement()) @map("package_id") @db.UnsignedInt
+  packageName String  @map("package_name") @db.VarChar(255)
+  price       Decimal @db.Decimal(15, 2)
+  benefits    Json
+  isActive    Boolean @default(true) @map("is_active")
+
+  orders Order[]
+
+  @@map("product_packages")
+}
+
+model Order {
+  id               BigInt       @id @default(autoincrement()) @map("order_id") @db.UnsignedBigInt
+  userId           BigInt       @map("user_id") @db.UnsignedBigInt
+  packageId        Int?         @map("package_id") @db.UnsignedInt
+  totalAmount      Decimal      @map("total_amount") @db.Decimal(15, 2)
+  paymentMethod    String?      @map("payment_method") @db.VarChar(50)
+  pgTransactionId  String?      @unique @map("pg_transaction_id") @db.VarChar(255)
+  status           OrderStatus  @default(PENDING)
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+
+  user             User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  package          ProductPackage?     @relation(fields: [packageId], references: [id])
+  pointTransactions PointTransaction[]
+
+  @@map("orders")
+}
+
+enum OrderStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+model PointTransaction {
+  id               BigInt   @id @default(autoincrement()) @map("transaction_id") @db.UnsignedBigInt
+  userId           BigInt   @map("user_id") @db.UnsignedBigInt
+  amount           BigInt   @map("amount")
+  reasonType       String   @map("reason_type") @db.VarChar(50)
+  relatedOrderId   BigInt?  @map("related_order_id") @db.UnsignedBigInt
+  description      String?  @db.VarChar(255)
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order Order? @relation(fields: [relatedOrderId], references: [id])
+
+  @@index([userId, createdAt], name: "idx_user_id_created_at")
+  @@map("point_transactions")
+}
+
+// =================================================================
+// Section 3: Enhanced Search Features
+// =================================================================
+
+model SavedSearch {
+  id              BigInt   @id @default(autoincrement()) @map("saved_search_id") @db.UnsignedBigInt
+  userId          BigInt   @map("user_id") @db.UnsignedBigInt
+  searchName      String   @map("search_name") @db.VarChar(100)
+  searchCriteria  Json     @map("search_criteria")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isActive])
+  @@map("saved_searches")
+}
+
+model SearchHistory {
+  id              BigInt   @id @default(autoincrement()) @map("history_id") @db.UnsignedBigInt
+  userId          BigInt   @map("user_id") @db.UnsignedBigInt
+  searchCriteria  Json     @map("search_criteria")
+  resultsCount    Int      @map("results_count") @db.UnsignedInt
+  searchedAt      DateTime @default(now()) @map("searched_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, searchedAt])
+  @@map("search_history")
+}
