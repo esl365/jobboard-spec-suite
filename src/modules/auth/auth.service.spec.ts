@@ -93,6 +93,7 @@ describe('AuthService', () => {
       expect(result).toEqual({
         accessToken: 'mock-jwt-token',
         tokenType: 'bearer',
+        refreshToken: 'mock-jwt-token',
         expiresIn: 86400,
         user: {
           id: 1,
@@ -165,6 +166,7 @@ describe('AuthService', () => {
       expect(result).toEqual({
         accessToken: 'mock-jwt-token',
         tokenType: 'bearer',
+        refreshToken: 'mock-jwt-token',
         expiresIn: 86400,
         user: {
           id: 1,

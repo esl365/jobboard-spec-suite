@@ -76,6 +76,7 @@ export class AuthService {
     };
 
     const accessToken = this.jwtService.sign(payload);
+    const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
 
     // Send welcome email (non-blocking)
     const username = email.split('@')[0];
@@ -86,6 +87,7 @@ export class AuthService {
     return {
       accessToken,
       tokenType: 'bearer',
+      refreshToken,
       expiresIn: 86400, // 24 hours
       user: {
         id: Number(user.id),
@@ -138,10 +140,12 @@ export class AuthService {
     };
 
     const accessToken = this.jwtService.sign(payload);
+    const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
 
     return {
       accessToken,
       tokenType: 'bearer',
+      refreshToken,
       expiresIn: 86400, // 24 hours
       user: {
         id: Number(user.id),
@@ -178,10 +182,12 @@ export class AuthService {
     };
 
     const accessToken = this.jwtService.sign(payload);
+    const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
 
     return {
       accessToken,
       tokenType: 'bearer',
+      refreshToken,
       expiresIn: 86400, // 24 hours
       user: {
         id: Number(user.id),
