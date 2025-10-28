@@ -69,8 +69,10 @@ export class ApplicationService {
       throw new ConflictException('You have already applied to this job');
     }
 
-    // Get or create default application stage for the company
+    // Get or create default application stage for the company (atomic upsert to prevent race conditions)
     const companyUserId = Number(job.companyUserId);
+
+    // First, try to find existing default stage
     let defaultStage = await this.prisma.jobApplicationStage.findFirst({
       where: {
         companyUserId: BigInt(companyUserId),
@@ -78,16 +80,26 @@ export class ApplicationService {
       },
     });
 
+    // If not found, use upsert to create it atomically
     if (!defaultStage) {
-      // Create default stage if none exists
-      defaultStage = await this.prisma.jobApplicationStage.create({
-        data: {
-          companyUserId: BigInt(companyUserId),
-          stageName: 'Applied',
-          stageOrder: 1,
-          isDefaultStage: true,
-        },
-      });
+      try {
+        defaultStage = await this.prisma.jobApplicationStage.create({
+          data: {
+            companyUserId: BigInt(companyUserId),
+            stageName: 'Applied',
+            stageOrder: 1,
+            isDefaultStage: true,
+          },
+        });
+      } catch (error) {
+        // If another request created it concurrently, fetch it
+        defaultStage = await this.prisma.jobApplicationStage.findFirstOrThrow({
+          where: {
+            companyUserId: BigInt(companyUserId),
+            isDefaultStage: true,
+          },
+        });
+      }
     }
 
     // Create application

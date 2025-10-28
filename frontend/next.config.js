@@ -10,6 +10,8 @@ const nextConfig = {
         pathname: '/**',
       },
     ],
+    // Add unoptimized for development to avoid 500 errors with external images
+    unoptimized: process.env.NODE_ENV === 'development',
   },
 }
 
