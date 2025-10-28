@@ -4,6 +4,7 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { DatabaseModule } from './common/database.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { JobModule } from './modules/job/job.module';
 import { ApplicationModule } from './modules/application/application.module';
@@ -20,6 +21,9 @@ import { BookmarkModule } from './modules/bookmark/bookmark.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
+
+    // Global Database module
+    DatabaseModule,
 
     // Rate limiting (relaxed for development)
     ThrottlerModule.forRoot([

@@ -94,9 +94,9 @@ export class JobService {
       ];
     }
 
-    // Location filtering
+    // Location filtering (MySQL doesn't support mode: 'insensitive', uses collation)
     if (location) {
-      where.location = { contains: location, mode: 'insensitive' };
+      where.location = { contains: location };
     }
 
     // Remote filtering
