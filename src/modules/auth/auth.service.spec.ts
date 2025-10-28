@@ -93,7 +93,7 @@ describe('AuthService', () => {
       prismaMock.userRole.findMany.mockResolvedValue([
         {
           userId: BigInt(1),
-          roleId: BigInt(1),
+          roleId: 1,
           assignedAt: new Date(),
           role: {
             id: BigInt(1),
@@ -183,7 +183,7 @@ describe('AuthService', () => {
       prismaMock.userRole.findMany.mockResolvedValue([
         {
           userId: BigInt(1),
-          roleId: BigInt(1),
+          roleId: 1,
           assignedAt: new Date(),
           role: {
             id: BigInt(1),
