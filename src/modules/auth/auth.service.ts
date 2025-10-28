@@ -67,15 +67,27 @@ export class AuthService {
       ipAddress,
     );
 
-    // Generate JWT token
+    // Fetch user roles (typically 'jobseeker' for new registrations)
+    const userRoles = await this.prisma.userRole.findMany({
+      where: { userId: user.id },
+      include: { role: true },
+    });
+    const roles = userRoles.map((ur) => ur.role.roleName);
+
+    // Generate JWT tokens
     const payload = {
       sub: user.id.toString(),
       email: user.email,
       userType: user.userType,
-      deviceId, // Include deviceId in JWT payload
+      roles, // Include roles
+      deviceId,
     };
 
-    const accessToken = this.jwtService.sign(payload);
+    const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
+    const refreshToken = this.jwtService.sign(
+      { sub: user.id.toString(), deviceId },
+      { expiresIn: '7d' },
+    );
 
     // Send welcome email (non-blocking)
     const username = email.split('@')[0];
@@ -85,12 +97,14 @@ export class AuthService {
 
     return {
       accessToken,
+      refreshToken,
       tokenType: 'bearer',
-      expiresIn: 86400, // 24 hours
+      expiresIn: 900, // 15 minutes
       user: {
         id: Number(user.id),
         email: user.email,
         userType: user.userType,
+        roles, // Include roles in response
       },
     };
   }

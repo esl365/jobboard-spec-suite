@@ -28,7 +28,13 @@ describe('AuthService', () => {
         {
           provide: JwtService,
           useValue: {
-            sign: jest.fn().mockReturnValue('mock-jwt-token'),
+            sign: jest.fn((payload) => {
+              // Return different tokens based on payload
+              if (payload.roles) {
+                return 'mock-access-token';
+              }
+              return 'mock-refresh-token';
+            }),
           },
         },
         {
@@ -84,6 +90,20 @@ describe('AuthService', () => {
         resumeReadCoupons: 0,
         updatedAt: new Date(),
       });
+      prismaMock.userRole.findMany.mockResolvedValue([
+        {
+          userId: BigInt(1),
+          roleId: BigInt(1),
+          assignedAt: new Date(),
+          role: {
+            id: BigInt(1),
+            roleName: 'jobseeker',
+            description: 'Job Seeker Role',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        },
+      ]);
 
       (bcrypt.genSalt as jest.Mock).mockResolvedValue('salt');
       (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-password');
@@ -91,13 +111,15 @@ describe('AuthService', () => {
       const result = await service.register(registerDto, 'Mozilla/5.0', '127.0.0.1');
 
       expect(result).toEqual({
-        accessToken: 'mock-jwt-token',
+        accessToken: 'mock-access-token',
+        refreshToken: 'mock-refresh-token',
         tokenType: 'bearer',
-        expiresIn: 86400,
+        expiresIn: 900,
         user: {
           id: 1,
           email: registerDto.email,
           userType: registerDto.userType,
+          roles: ['jobseeker'],
         },
       });
 
@@ -158,18 +180,34 @@ describe('AuthService', () => {
 
       prismaMock.user.findUnique.mockResolvedValue(mockUser);
       prismaMock.user.update.mockResolvedValue(mockUser);
+      prismaMock.userRole.findMany.mockResolvedValue([
+        {
+          userId: BigInt(1),
+          roleId: BigInt(1),
+          assignedAt: new Date(),
+          role: {
+            id: BigInt(1),
+            roleName: 'jobseeker',
+            description: 'Job Seeker Role',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        },
+      ]);
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
       const result = await service.login(loginDto, 'Mozilla/5.0', '127.0.0.1');
 
       expect(result).toEqual({
-        accessToken: 'mock-jwt-token',
+        accessToken: 'mock-access-token',
+        refreshToken: 'mock-refresh-token',
         tokenType: 'bearer',
-        expiresIn: 86400,
+        expiresIn: 900,
         user: {
           id: 1,
           email: loginDto.email,
           userType: 'PERSONAL',
+          roles: ['jobseeker'],
         },
       });
 
